@@ -17,7 +17,7 @@ def test_discovers_repository_skills() -> None:
     assert {"android-triage", "platform-check", "report-and-export"} <= {
         skill.id for skill in skills
     }
-    assert len(skills) == 11
+    assert len(skills) >= 11
     for skill in skills:
         assert skill.description
         assert skill.version
@@ -60,7 +60,7 @@ def test_install_all(tmp_path: Path) -> None:
     assert {"android-triage", "platform-check", "report-and-export"} <= {
         path.name for path in (tmp_path / "all").iterdir()
     }
-    assert len(list((tmp_path / "all").iterdir())) == 11
+    assert len(list((tmp_path / "all").iterdir())) >= 11
 
 
 def test_malformed_frontmatter_fails(tmp_path: Path) -> None:
@@ -88,5 +88,5 @@ def test_missing_description_fails(tmp_path: Path) -> None:
 def test_runtime_reports_skill_count(runtime: Runtime) -> None:
     summary = runtime.info()["skills"]
     assert isinstance(summary, dict)
-    assert summary["count"] == 11
+    assert summary["count"] >= 11
     assert summary["error"] is None

@@ -1,16 +1,15 @@
-# RAA v3.0.0 Enhancement Plan & Strategic Roadmap
-## Autonomous Agent Swarms, Enterprise Intelligence & Multi-Platform Offensive Operations
+# RAA v4.0.0 Enhancement Plan & Strategic Roadmap
+## Autonomous Self-Evolving Mobile Intelligence, Interactive Setup UI & Wireless Operations
 
 <p align="center">
   <img src="../images/raa.png" width="120" alt="RAA Logo">
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Current_Release-v2.0.0_Production-success?style=flat-square" alt="Current Release: v2.0.0 Production">
-  <img src="https://img.shields.io/badge/Target_Release-v3.0.0_Enterprise_Swarm-blueviolet?style=flat-square" alt="Target Release: v3.0.0 Enterprise Swarm">
-  <img src="https://img.shields.io/badge/Current_Tools-244_Implemented-blue?style=flat-square" alt="Current Tools: 244 Implemented">
-  <img src="https://img.shields.io/badge/Target_Tools-324_Implemented-purple?style=flat-square" alt="Target Tools: 324 Implemented">
-  <img src="https://img.shields.io/badge/Tests-526_Passing-brightgreen?style=flat-square" alt="Tests: 437 Passing -> 620+ Target">
+  <img src="https://img.shields.io/badge/Current_Release-v4.0.0_Production-success?style=flat-square" alt="Current Release: v4.0.0 Production">
+  <img src="https://img.shields.io/badge/Implemented_Tools-377_Implemented-blue?style=flat-square" alt="Implemented Tools: 377 Implemented">
+  <img src="https://img.shields.io/badge/CLI_Commands-342_Commands-orange?style=flat-square" alt="CLI Commands: 342 Commands">
+  <img src="https://img.shields.io/badge/Tests-660+_Passing-brightgreen?style=flat-square" alt="Tests: 660+ Passing">
   <img src="https://img.shields.io/badge/Protocol-2026--07--28-informational?style=flat-square" alt="Protocol: 2026-07-28">
 </p>
 
@@ -802,7 +801,8 @@ RAA coordinates **23 new specialized AI subagents**, expanding total active suba
 |  v2.3.0     | Phase 17    | 280 Tools  | 525 Tests   | Kuna, RetDec, REA GDB/MI Debugger & Rizin  |
 |  v2.4.0     | Phase 18    | 300 Tools  | 565 Tests   | Clean-Room Spec, Multi-Viewport UI Match   |
 |  v2.5.0     | Phase 19    | 312 Tools  | 590 Tests   | Enterprise MCP, WASM Sandbox & Mutation Guard|
-|  v3.0.0     | Phase 20    | 324 Tools  | 620+ Tests  | Autonomous Offensive Operations & SkillNet |
+|  v3.0.0     | Phase 20    | 322 Tools  | 526 Tests   | Autonomous Offensive Operations & SkillNet |
+|  v4.0.0     | Phase 21    | 377 Tools  | 660+ Tests  | Setup UI, Mobile Agent, Cadence, Evolution, MCP Mesh, Wireless & TV Studio |
 +---------------------------------------------------------------------------------------------------+
 ```
 

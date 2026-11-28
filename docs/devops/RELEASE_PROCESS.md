@@ -25,8 +25,8 @@ Releases are triggered by pushing a signed Git tag following Semantic Versioning
 ```bash
 git checkout main
 git pull origin main
-git tag -a v2.0.1 -m "Release v2.0.1: Production stability updates"
-git push origin v2.0.1
+git tag -a v4.0.0 -m "Release v4.0.0: Autonomous Mobile Intelligence & Self-Evolving Ecosystem"
+git push origin v4.0.0
 ```
 
 ### Step 2: Automated Pipeline Execution
@@ -45,7 +45,7 @@ Pushing the tag triggers `.github/workflows/release.yml`:
   ```bash
   python -m venv test_env
   source test_env/bin/activate # or test_env\Scripts\activate on Windows
-  pip install raa-2.0.1-py3-none-any.whl
+  pip install raa-4.0.0-py3-none-any.whl
   raa doctor
   raa --version
   ```

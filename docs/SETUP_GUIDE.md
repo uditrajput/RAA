@@ -5,14 +5,14 @@
 </p>
 
 <p align="center">
-  <strong>Comprehensive Installation, Client Integration (Claude, Cursor, Antigravity, VS Code), and Engine Configuration for RAA v3.0.0</strong>
+  <strong>Comprehensive Installation, Client Integration (Claude, Cursor, Antigravity, VS Code), and Engine Configuration for RAA v4.0.0</strong>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Current_Release-v3.0.0_Production-success?style=flat-square" alt="Current Release: v3.0.0 Production">
-  <img src="https://img.shields.io/badge/Total_Tools-322_Implemented-blue?style=flat-square" alt="Total Tools: 322 Implemented">
-  <img src="https://img.shields.io/badge/CLI_Commands-311_Commands-orange?style=flat-square" alt="CLI Commands: 311 Commands">
-  <img src="https://img.shields.io/badge/Tests-526_Passing-brightgreen?style=flat-square" alt="Tests: 526 Passing">
+  <img src="https://img.shields.io/badge/Current_Release-v4.0.0_Production-success?style=flat-square" alt="Current Release: v4.0.0 Production">
+  <img src="https://img.shields.io/badge/Total_Tools-377_Implemented-blue?style=flat-square" alt="Total Tools: 377 Implemented">
+  <img src="https://img.shields.io/badge/CLI_Commands-342_Commands-orange?style=flat-square" alt="CLI Commands: 342 Commands">
+  <img src="https://img.shields.io/badge/Tests-660+_Passing-brightgreen?style=flat-square" alt="Tests: 660+ Passing">
   <img src="https://img.shields.io/badge/Protocol-2026--07--28-informational?style=flat-square" alt="Protocol: 2026-07-28">
 </p>
 
@@ -20,7 +20,7 @@
 
 ## 1. System Architecture & Setup Topology
 
-RAA (Reverse Android Anything) serves as an agent-native application intelligence core. It exposes **322 tools** across **8 capability profiles** simultaneously via the Model Context Protocol (MCP stdio and Streamable HTTP), a high-performance REST surface, and a unified 311-command CLI.
+RAA (Reverse Android Anything) serves as an agent-native application intelligence core. It exposes **377 tools** across **8 capability profiles** simultaneously via the Model Context Protocol (MCP stdio and Streamable HTTP), a high-performance REST surface, an interactive Setup & Tool Manager UI (`/setup`), and a unified 342-command CLI.
 
 ```mermaid
 flowchart TD
@@ -45,8 +45,8 @@ flowchart TD
         T3["Subprocess Direct CLI (Typer / Rich)"]:::conn
     end
 
-    subgraph CorePlatform["3. RAA Core Platform v3.0"]
-        Runtime["Runtime Engine & Registry (322 Tools)"]:::core
+    subgraph CorePlatform["3. RAA Core Platform v4.0"]
+        Runtime["Runtime Engine & Registry (377 Tools)"]:::core
         Policy["Fail-Closed Policy Engine (Scopes)"]:::core
         Audit["Cryptographic SHA-256 Audit Trail"]:::core
         Tenancy["Tenancy & Token Budget Manager"]:::core
@@ -54,13 +54,13 @@ flowchart TD
 
     subgraph ProfileMatrix["4. Active Capability Profiles"]
         P1["minimal (12 tools)"]:::profiles
-        P2["core (180 tools)"]:::profiles
-        P3["dynamic (218 tools)"]:::profiles
-        P4["api (180 tools)"]:::profiles
-        P5["ui (180 tools)"]:::profiles
+        P2["core (230 tools)"]:::profiles
+        P3["dynamic (271 tools)"]:::profiles
+        P4["api (232 tools)"]:::profiles
+        P5["ui (231 tools)"]:::profiles
         P6["admin (42 tools)"]:::profiles
-        P7["swarm (150 tools)"]:::profiles
-        P8["full (322 tools)"]:::profiles
+        P7["swarm (200 tools)"]:::profiles
+        P8["full (377 tools)"]:::profiles
     end
 
     subgraph Engines["5. Reversing Engines & Sandboxes"]
@@ -260,13 +260,13 @@ RAA allows clients to filter tool exposure based on task context and LLM context
 | Profile Name | Tool Count | Optimal For | Highlights & Tools |
 | :--- | :---: | :--- | :--- |
 | **`minimal`** | **12** | Local / Small LLMs | `capabilities_get`, `project_create`, `artifact_ingest`, `manifest_get`, `doctor`. |
-| **`core`** | **180** | Default Static Analysis | All minimal tools + DEX disassembler, AST recoverer, WASM decompiler, string decryptor, call graph tracer. |
-| **`dynamic`** | **218** | Live Target Testing | Core tools + Wireless ADB fleet manager, Frida script injector, BLE GATT peripheral sniffer, virtual display crawler. |
-| **`api`** | **180** | Backend Reversing | Core tools + API endpoint crawler, semantic WAF mutator (403 bypass), OpenAPI 3.1 synthesizer, Postman exporter. |
-| **`ui`** | **180** | Living Canvas UI | Core tools + View hierarchy extractor, Google Stitch M3 Compose generator, Apple HIG doctor, liquid glass shaders. |
+| **`core`** | **230** | Default Static Analysis | All minimal tools + DEX disassembler, AST recoverer, WASM decompiler, toolchain manager, setup UI, and class search. |
+| **`dynamic`** | **271** | Live Target Testing | Core tools + Wireless ADB fleet & Wi-Fi gateway, Frida script injector, BLE GATT peripheral sniffer, virtual display crawler. |
+| **`api`** | **232** | Backend Reversing | Core tools + API endpoint crawler, semantic WAF mutator (403 bypass), OpenAPI 3.1 synthesizer, Postman exporter. |
+| **`ui`** | **231** | Living Canvas UI | Core tools + View hierarchy extractor, Google Stitch M3 Compose generator, Android TV Studio, Apple HIG doctor, liquid glass shaders. |
 | **`admin`** | **42** | DevOps & Forensics | Engine diagnostic runner, digital signature validator, audit hash-chain verifier, project backup & restore. |
-| **`swarm`** | **150** | Multi-Agent Meshes | Multi-agent paperclip governance, token budget meter, blackboard federated memory, MetaGPT SOP pipeline. |
-| **`full`** | **322** | Complete Platform | **All 322 tools** across all operational domains simultaneously. |
+| **`swarm`** | **200** | Multi-Agent Meshes | Multi-agent paperclip governance, token budget meter, blackboard federated memory, self-evolving recipes, MetaGPT SOP pipeline. |
+| **`full`** | **377** | Complete Platform | **All 377 tools** across all operational domains simultaneously. |
 
 To launch with a specific profile, use the `--profile` CLI option or set `RAA_PROFILE=<profile>`.
 
@@ -333,7 +333,7 @@ python -m raa.cli.main doctor
 │ workspace_writable │ True                                │
 │ database_ok        │ True                                │
 │ mcp_sdk            │ 2.3.0                               │
-│ implemented_tools  │ 322                                 │
+│ implemented_tools  │ 377                                 │
 │ engines            │ Catalogued & Detected               │
 └────────────────────┴─────────────────────────────────────┘
 ```

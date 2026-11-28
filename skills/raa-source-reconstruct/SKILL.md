@@ -14,3 +14,8 @@ Reconstruct clean Java/Kotlin classes with persistent rename maps and call graph
 2. Retrieve class definition and bytecode using `source_get_class`.
 3. Traverse call relationships using `source_get_callers` and `source_get_callees`.
 4. Suggest persistent deobfuscation renames via `deobfuscate`.
+
+## Source-Driven & Anti-Rationalization Rules
+- Never invent class names, method signatures, or control flow from memory; quote only symbols directly observed in `source_get_class` or `source_search`.
+- Distinguish `observed` bytecode behavior from `inferred` rename suggestions.
+- Verify caller/callee edges before asserting reachability.

@@ -9,9 +9,9 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Current_Release-v3.0.0_Production-success?style=flat-square" alt="Current Release: v3.0.0 Production">
-  <img src="https://img.shields.io/badge/Total_Tools-322_Implemented-blue?style=flat-square" alt="Total Tools: 322 Implemented">
-  <img src="https://img.shields.io/badge/Tests-526_Passing-brightgreen?style=flat-square" alt="Tests: 516 Passing">
+  <img src="https://img.shields.io/badge/Current_Release-v4.0.0_Production-success?style=flat-square" alt="Current Release: v4.0.0 Production">
+  <img src="https://img.shields.io/badge/Total_Tools-379_Implemented-blue?style=flat-square" alt="Total Tools: 379 Implemented">
+  <img src="https://img.shields.io/badge/Tests-740+_Passing-brightgreen?style=flat-square" alt="Tests: 740+ Passing">
 </p>
 <p align="center">
   <img src="https://img.shields.io/badge/Protocol-2026--07--28-informational?style=flat-square" alt="Protocol: 2026-07-28">
@@ -24,7 +24,7 @@
 
 | Version | Release Date | Implemented Tools | Passing Tests | Primary Focus & Highlights |
 | :--- | :---: | :---: | :---: | :--- |
-| [**v4.0.0**](releases/RELEASE_v4.0.0.md) | Q1 2027 (Planned) | **362+** | **610+** | Autonomous Self-Evolving Mobile Intelligence, Interactive Setup & Tool Manager UI (1-click download, auto-path, delete, skip/reopen), Two-Way Mobile Agent (Telegram & WhatsApp RAA prompt execution & APK delivery), Configurable Message Intensity Cadence (start/end, 1m, 2m, 5m, 10m), Self-Evolving Dynamic Procedural Skills & Recipe Patching (modeled after Nod), Untrusted Content Boundary, Zero-Knowledge Vault, Dynamic External MCP Mesh (UI + LLM configuration for GitHub, Playwright, DBs, Scanners), Wireless Device Gateway (cable-free Wi-Fi debugging & resilient APK push via CleanYourTV), and Android TV / Google TV 10-Foot Living Canvas UI Redesign. |
+| [**v4.0.0**](releases/RELEASE_v4.0.0.md) | Nov 27, 2026 | **379** | **740+** | Autonomous Self-Evolving Mobile Intelligence, Interactive Setup & Tool Manager UI (1-click download, auto-path, delete, skip/reopen, profile-scoped filtering & pagination), Two-Way Mobile Agent (Telegram & WhatsApp RAA prompt execution & APK delivery), Configurable Message Intensity Cadence (start/end, 1m, 2m, 5m, 10m), Self-Evolving Dynamic Procedural Skills & Recipe Patching (modeled after Nod), Untrusted Content Boundary, Zero-Knowledge Vault, Dynamic External MCP Mesh (UI + LLM configuration for GitHub, Playwright, DBs, Scanners), Wireless Device Gateway (cable-free Wi-Fi debugging & resilient APK push via CleanYourTV), Rootless UAD-Backed Android Debloat & Undo Scripts (`android_debloat_*`, `raa debloat`), Hardened Agent Skill Verification Gates, Android TV / Google TV 10-Foot Living Canvas UI Redesign, and Pre-Submission App Store & Google Play Compliance (`raa-app-store-compliance` via `mjmirza/app-store-compliance`). |
 | [**v3.0.0**](releases/RELEASE_v3.0.0.md) | Nov 22, 2026 | **322** | **526** | Offensive Security Operations, Yaklang HackSkills, Deep HTTP 403 Bypass Mutator, Computer-Use GUI Agent (Ghidra, IDA, Jadx-GUI, Burp), FrontierAgent ReAct/Swarm Switcher, OpenMausBot Gatekeeper, Non-Destructive Exploit PoC Chaining, SkillNet Evaluation Gym, Portable SkillPack Bundles & v3.0 CycloneDX 1.5 Tamper-Evident Report Seal. |
 | [**v2.5.0**](releases/RELEASE_v2.5.0.md) | Nov 22, 2026 | **312** | **493** | Enterprise MCP Mesh (Postman, GitHub, Playwright, Apify), Universal 7-CLI Gateway (Claude, Codex, Gemini, AGY, DeepSeek, MiniMax, Grok), Omnigent Meta-Policy, Spring AI Nacos Registry, n8n Workflow-as-Code Bridge, WASM Sandboxed Plugin Runtime, SIMD Entropy Analyzer & Forensic Mutation Digest Guard. |
 | [**v2.4.0**](releases/RELEASE_v2.4.0.md) | Nov 22, 2026 | **300** | **485** | Autonomous Mobile UI Reconstruction, Google Stitch M3 Compose Modernizer, Apple HIG Doctor, Liquid Glass Shader Studio, Bento Grid Presentation Dashboard, Clean Architecture Linter, Clean-Room Functional Spec Synthesizer, Multi-Viewport Verification, Unity/Godot Asset Dumpers, SQLite Forensics & Sodu Closed-Loop CI/CD. |
@@ -54,6 +54,21 @@
 ---
 
 ## Detailed Version Changelogs
+
+### v4.0.0 (Production Release — Phase 21: Autonomous Self-Evolving Mobile Intelligence & Ecosystem)
+*Released: November 27, 2026 | Tools: 379 | CLI Commands: 345 | Skills: 23 | Agents: 18 | Stability: Production Milestone*
+
+#### Highlights
+- **Interactive First-Time Setup & Tool Manager UI (`open_setup_ui`, `tool_manager_*`):** Embedded React/Tailwind web console at `/setup` with 1-click engine downloads, SHA-256 verification, runtime `PATH` injection, storage reclamation, profile-scoped filtering, and skip/reopen support.
+- **Two-Way Conversational Mobile Agent (`channel_*`):** Execute RAA reverse-engineering tasks and receive rebuilt/signed `.apk` deliverables directly over Telegram and WhatsApp, protected by `guard.py` domain intent filtering.
+- **Configurable Message Intensity & Cadence Engine (`channel_intensity_*`):** Granular notification cadence (start/end, 1m, 2m, 5m, 10m, or custom intervals) with priority break-in alerts for critical CVEs and exposed secrets.
+- **Self-Evolving Procedural Memory (`recipe_self_evolve`, `skills_patch_procedure`):** Dynamic skill saving/patching and persistent lessons in `.raa-workspace/memory/MEMORY.md`.
+- **Zero-Knowledge Vault & Untrusted Content Shield (`vault_*`, `untrusted_content_wrap`):** Encrypted credential storage outside LLM prompt context and quarantine blocks for untrusted decompiled payloads.
+- **Dynamic External MCP Mesh (`mcp_mesh_*`):** Bidirectional MCP client/orchestrator supporting `stdio`, `sse`, and `streamable-http` external MCP servers with vault-injected credentials.
+- **Wireless Device Gateway & Android TV 10-Foot Studio (`wireless_*`, `tv_ui_redesign`, `visual_screendiff_verify`):** Cable-free Wi-Fi ADB pairing, resilient base64 APK push, Compose for TV Material 3 UI synthesis, and wireless Perfetto benchmarking.
+- **App Store & Google Play Compliance (`raa-app-store-compliance`):** Pre-submission store rejection pattern auditing, Data Safety / Privacy Manifest verification, and regulatory deadline tracking.
+
+See [releases/RELEASE_v4.0.0.md](releases/RELEASE_v4.0.0.md) for the complete v4.0.0 release notes.
 
 ### v3.0.0 (Production Release — Phase 20: Offensive Security Operations & Autonomous Exploit Validation)
 *Released: November 22, 2026 | Tools: 322 | Tests: 516 Passing | Stability: Production Milestone / Gold Master*

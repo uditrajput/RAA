@@ -5,9 +5,9 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Current_Release-v3.0.0_Production-success?style=flat-square" alt="Current Release: v2.0.0 Production">
-  <img src="https://img.shields.io/badge/Total_Tools-322_Implemented-blue?style=flat-square" alt="Total Tools: 244 Implemented">
-  <img src="https://img.shields.io/badge/Tests-526_Passing-brightgreen?style=flat-square" alt="Tests: 437 Passing">
+  <img src="https://img.shields.io/badge/Current_Release-v4.0.0_Production-success?style=flat-square" alt="Current Release: v4.0.0 Production">
+  <img src="https://img.shields.io/badge/Total_Tools-377_Implemented-blue?style=flat-square" alt="Total Tools: 377 Implemented">
+  <img src="https://img.shields.io/badge/Tests-660+_Passing-brightgreen?style=flat-square" alt="Tests: 660+ Passing">
 </p>
 <p align="center">
   <img src="https://img.shields.io/badge/Protocol-2026--07--28-informational?style=flat-square" alt="Protocol: 2026-07-28">
@@ -64,27 +64,32 @@ flowchart TD
     classDef priv fill:#880E4F,stroke:#FF1744,stroke-width:2px,color:#FFFFFF,font-weight:bold;
     classDef privnode fill:#311B92,stroke:#7C4DFF,stroke-width:1px,color:#FFFFFF;
 
-    Safe["🛡️ Safe Baseline Scopes (Default)"]:::safe --> PR["project.read"]:::safenode
+    Safe["🛡️ Safe / Baseline Scopes (Default)"]:::safe --> PR["project.read"]:::safenode
+    Safe --> PW["project.write"]:::safenode
     Safe --> SR["static.read"]:::safenode
     Safe --> EW["export.write"]:::safenode
     
-    Priv["⚠️ Privileged Scopes (Opt-in Explicit Grant)"]:::priv --> PW["project.write"]:::privnode
+    Priv["⚠️ Dangerous / Privileged Scopes (Opt-in Explicit Grant)"]:::priv --> ER["export.raw"]:::privnode
     Priv --> DD["dynamic.device"]:::privnode
-    Priv --> DH["dynamic.hook"]:::privnode
+    Priv --> DI["dynamic.instrument"]:::privnode
+    Priv --> NC["network.capture / osint / crawl / fetch"]:::privnode
+    Priv --> AI["android.install"]:::privnode
     Priv --> AP["android.patch"]:::privnode
     Priv --> AS["android.sign"]:::privnode
-    Priv --> AI["android.install"]:::privnode
+    Priv --> LE["llm.external"]:::privnode
+    Priv --> ADM["admin"]:::privnode
 ```
 
-1. **`project.read`:** Read project metadata, artifacts, and summary reports.
-2. **`project.write`:** Mutate projects, ingest new artifacts, and restore backups.
-3. **`static.read`:** Read decompiled code, manifest structures, resources, and strings.
-4. **`dynamic.device`:** Connect to ADB daemons, acquire device leases, and capture screens.
-5. **`dynamic.hook`:** Deploy Frida scripts, attach to processes, and dump memory/storage.
-6. **`android.patch`:** Rewrite Dalvik bytecode, inject Frida gadgets, or modify AXML flags.
-7. **`android.sign`:** Sign APK containers with project or test certificates.
-8. **`android.install`:** Install modified or rebuilt APKs onto physical or virtual devices.
-9. **`export.write`:** Generate OpenAPI specifications, Postman collections, and UI wireframes.
+1. **`project.read`:** Read project metadata, artifacts, and summary reports (default).
+2. **`project.write`:** Mutate projects, ingest new artifacts, and restore backups (default).
+3. **`static.read`:** Read decompiled code, manifest structures, resources, and strings (default).
+4. **`export.write`:** Generate OpenAPI specifications, Postman collections, and UI wireframes (default).
+5. **`export.raw`:** Export raw decompiled source trees and unredacted binary dumps.
+6. **`dynamic.device`:** Connect to ADB daemons, acquire device leases, and capture screens.
+7. **`dynamic.instrument`:** Deploy Frida scripts, attach to processes, and instrument runtime calls.
+8. **`network.capture` / `network.osint` / `network.crawl` / `network.fetch`:** Capture live traffic, query OSINT, crawl endpoints, and fetch remote binaries/MCP resources.
+9. **`android.install` / `android.patch` / `android.sign`:** Install, patch Dalvik/AXML bytecode, and sign rebuilt APK/AAB containers.
+10. **`llm.external` / `admin`:** Dispatch to external LLM harnesses and perform administrative operations (engine catalog, audit verify, SBOM, backup/restore).
 
 ---
 

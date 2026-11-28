@@ -6,10 +6,12 @@ against threat intelligence databases, C2 infrastructure, and OSINT footprinting
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import ipaddress
 import re
-from typing import Any
+import shutil
+from typing import Any, Literal
 
 # Known malicious or suspicious dynamic DNS and proxy patterns
 SUSPICIOUS_DOMAINS = {
@@ -174,6 +176,93 @@ def check_leaked_email_intel(
 
     return {
         "status": "EMAIL_INTEL_COMPLETE",
+        "mode": "offline",
+        "total_emails": len(emails),
+        "high_risk_emails": sum(1 for e in email_intel if e["risk_level"] == "HIGH"),
+        "findings": email_intel,
+    }
+
+
+def _parse_holehe_output(stdout: str) -> list[str]:
+    """Extract registered platform names from holehe --only-used --no-color output."""
+    platforms: list[str] = []
+    for raw_line in stdout.splitlines():
+        line = raw_line.strip()
+        if line.startswith("[+]"):
+            candidate = line[3:].strip().split()[0].rstrip(",:;")
+            if candidate and candidate not in platforms:
+                platforms.append(candidate)
+    return platforms
+
+
+async def check_leaked_email_intel_async(
+    emails: list[str],
+    mode: Literal["offline", "holehe"] = "offline",
+    timeout_seconds: float = 30.0,
+) -> dict[str, Any]:
+    """Run email OSINT via offline heuristics or isolated holehe CLI subprocess."""
+    if mode == "offline":
+        return check_leaked_email_intel(emails=emails)
+
+    holehe_bin = shutil.which("holehe")
+    if not holehe_bin:
+        fallback = check_leaked_email_intel(emails=emails)
+        fallback["requested_mode"] = "holehe"
+        fallback["warnings"] = [
+            "holehe CLI not found on PATH; returned offline baseline instead. "
+            "Install holehe in an isolated environment to enable live 120+ service checks."
+        ]
+        return fallback
+
+    email_intel: list[dict[str, Any]] = []
+    for email in emails:
+        email_clean = email.strip().lower()
+        proc = await asyncio.create_subprocess_exec(
+            holehe_bin,
+            email_clean,
+            "--only-used",
+            "--no-color",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        try:
+            stdout_bytes, _ = await asyncio.wait_for(proc.communicate(), timeout=timeout_seconds)
+        except TimeoutError:
+            proc.kill()
+            await proc.wait()
+            email_intel.append(
+                {
+                    "email": email_clean,
+                    "exposure_score": 0,
+                    "risk_level": "UNKNOWN",
+                    "registered_platforms": [],
+                    "warning": f"holehe timed out after {timeout_seconds}s",
+                }
+            )
+            continue
+
+        platforms = _parse_holehe_output(stdout_bytes.decode("utf-8", errors="ignore"))
+        exposure_score = min(len(platforms) * 10, 100)
+        risk_level = (
+            "HIGH" if exposure_score >= 60 else ("MEDIUM" if exposure_score >= 30 else "LOW")
+        )
+        email_intel.append(
+            {
+                "email": email_clean,
+                "exposure_score": exposure_score,
+                "risk_level": risk_level,
+                "registered_platforms": platforms,
+                "recommendation": (
+                    "Enforce hardware security key (FIDO2/WebAuthn) and rotate access tokens"
+                    if risk_level == "HIGH"
+                    else "Verify multi-factor authentication (MFA) is active"
+                ),
+            }
+        )
+
+    return {
+        "status": "EMAIL_INTEL_COMPLETE",
+        "mode": "holehe",
         "total_emails": len(emails),
         "high_risk_emails": sum(1 for e in email_intel if e["risk_level"] == "HIGH"),
         "findings": email_intel,

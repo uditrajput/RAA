@@ -5,9 +5,9 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Current_Release-v3.0.0_Production-success?style=flat-square" alt="Current Release: v2.0.0 Production">
-  <img src="https://img.shields.io/badge/Total_Tools-322_Implemented-blue?style=flat-square" alt="Total Tools: 244 Implemented">
-  <img src="https://img.shields.io/badge/Tests-526_Passing-brightgreen?style=flat-square" alt="Tests: 437 Passing">
+  <img src="https://img.shields.io/badge/Current_Release-v4.0.0_Production-success?style=flat-square" alt="Current Release: v4.0.0 Production">
+  <img src="https://img.shields.io/badge/Total_Tools-377_Implemented-blue?style=flat-square" alt="Total Tools: 377 Implemented">
+  <img src="https://img.shields.io/badge/Tests-660+_Passing-brightgreen?style=flat-square" alt="Tests: 660+ Passing">
 </p>
 <p align="center">
   <img src="https://img.shields.io/badge/Protocol-2026--07--28-informational?style=flat-square" alt="Protocol: 2026-07-28">
@@ -36,8 +36,8 @@ flowchart TD
     classDef eng fill:#BF360C,stroke:#F4511E,stroke-width:2px,color:#FFFFFF;
 
     Client["Client / AI Agent Surface<br/>(MCP stdio & HTTP / CLI / REST / SDK)"]:::client -->|HTTP / Stdio| Proxy["Reverse Proxy / TLS Terminator<br/>(NGINX / Envoy / Traefik / ZTNA)"]:::proxy
-    Proxy -->|Bearer Token & Quota Gate| API["RAA Core Engine Server<br/>(FastAPI / FastMCP Runtime v3.0)"]:::core
-    API --> Services["Domain Services & Capability Registries<br/>(322 Implemented Tools • 8 Profiles)"]:::serv
+    Proxy -->|Bearer Token & Quota Gate| API["RAA Core Engine Server<br/>(FastAPI / FastMCP Runtime v4.0)"]:::core
+    API --> Services["Domain Services & Capability Registries<br/>(377 Implemented Tools • 8 Profiles)"]:::serv
     Services --> DB[("SQLite Database<br/>WAL Mode & Foreign Keys")]:::db
     Services --> Storage[("Local Artifact Storage &<br/>Hash-Chained Audit Trail")]:::db
     Services --> Engines["Reversing Engines & Sandboxes<br/>(JADX, Ghidra, RetDec, Kuna, Frida, PRoot)"]:::eng

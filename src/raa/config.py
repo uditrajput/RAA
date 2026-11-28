@@ -58,6 +58,44 @@ class Settings(BaseSettings):
 
     admin_enabled: bool = True
 
+    # Setup & Web UI (v4.0.0)
+    setup_port: int = Field(default=8765, ge=1, le=65535)
+    setup_auto_launch: bool = True
+    tools_managed_dir: str = ".raa-workspace/tools"
+
+    # Mobile Channels (Telegram & WhatsApp) (v4.0.0)
+    notifications_telegram_enabled: bool = False
+    telegram_bot_token: SecretStr | None = None
+    telegram_allowed_users: list[str] = Field(default_factory=list)
+
+    notifications_whatsapp_enabled: bool = False
+    whatsapp_mode: str = "cloud"  # "cloud" or "baileys"
+    whatsapp_phone: str = ""
+    whatsapp_api_token: SecretStr | None = None
+
+    # Cadence & Notification Intensity (v4.0.0)
+    cadence_mode: str = "interval"  # "start_end", "interval", "milestone", or "adaptive"
+    cadence_interval_minutes: int = 5
+    cadence_urgent_cve_breakin: bool = True
+    send_apk_attachment: bool = True
+
+    # Self-Evolving & Vault Security (v4.0.0)
+    self_evolving_enabled: bool = True
+    untrusted_content_shield: bool = True
+    vault_enabled: bool = True
+
+    # External MCP Mesh & Connectors (v4.0.0)
+    mcp_mesh_enabled: bool = True
+    mcp_mesh_store: str = ".raa-workspace/mcp_servers.json"
+    mcp_mesh_auto_discovery: bool = True
+
+    # Wireless Device Gateway & Android TV Studio (v4.0.0)
+    wireless_device_host: str = "192.168.1.100:5555"
+    wireless_auto_pair: bool = True
+    tv_studio_enabled: bool = True
+    tv_compose_target: str = "androidx.tv.material3"
+    screendiff_mask_topbar: bool = True
+
     @field_validator("log_level")
     @classmethod
     def _normalize_log_level(cls, value: str) -> str:
