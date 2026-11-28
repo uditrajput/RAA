@@ -6,7 +6,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
-from raa.policy.scopes import EXPORT_RAW, LLM_EXTERNAL, PROJECT_READ, STATIC_READ
+from raa.errors import PolicyDeniedError
+from raa.policy.scopes import EXPORT_RAW, LLM_EXTERNAL, NETWORK_OSINT, PROJECT_READ, STATIC_READ
 from raa.registry.models import (
     CapabilityRegistry,
     ToolAnnotations,
@@ -307,6 +308,14 @@ class SecLeakedEmailIntelInput(BaseModel):
     """Parameters to run OSINT email reconnaissance against developer services."""
 
     emails: list[str] = Field(min_length=1, description="Target email addresses to analyze.")
+    project_id: str | None = Field(
+        default=None,
+        description="Optional RAA project ID (required for live holehe/openosint modes).",
+    )
+    mode: Literal["offline", "holehe", "openosint"] = Field(
+        default="offline",
+        description="Execution mode: deterministic offline baseline, holehe CLI, or OpenOSINT MCP.",
+    )
 
 
 class SecApkleaksSecretScanInput(BaseModel):
@@ -708,8 +717,40 @@ async def _sec_bugbounty_report_format(
 
 
 async def _sec_leaked_email_intel(ctx: ToolContext, args: SecLeakedEmailIntelInput) -> ToolOutcome:
-    res = ctx.runtime.security.check_leaked_emails(emails=args.emails)
-    return ToolOutcome(data=res)
+    if args.mode == "offline":
+        res = ctx.runtime.security.check_leaked_emails(emails=args.emails)
+        return ToolOutcome(data=res)
+
+    granted = ctx.project.scopes if ctx.project is not None else ()
+    decision = ctx.runtime.policy.evaluate((NETWORK_OSINT,), granted)
+    if not decision.allowed:
+        raise PolicyDeniedError(
+            "Live email OSINT requires the 'network.osint' project scope.",
+            hint=decision.reason,
+            details={"missing_scopes": sorted(decision.missing)},
+        )
+
+    if args.mode == "openosint":
+        remote = await ctx.runtime.mcp_mesh.call_remote_tool(
+            "openosint",
+            "email_lookup",
+            {"emails": args.emails},
+            timeout_seconds=30.0,
+        )
+        return ToolOutcome(
+            data={
+                "status": "EMAIL_INTEL_COMPLETE",
+                "mode": "openosint",
+                "total_emails": len(args.emails),
+                "remote_result": remote,
+            }
+        )
+
+    from raa.services.api.cti_intel import check_leaked_email_intel_async
+
+    res = await check_leaked_email_intel_async(emails=args.emails, mode="holehe")
+    warnings = res.pop("warnings", []) if isinstance(res.get("warnings"), list) else []
+    return ToolOutcome(data=res, warnings=warnings)
 
 
 async def _sec_apkleaks_secret_scan(

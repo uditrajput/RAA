@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "raa"
-version = "3.0.0"
+version = "4.0.0"
 description = "RAA - Reverse Android Anything: agent-native Android application intelligence platform"
 readme = "README.md"
 requires-python = ">=3.11"

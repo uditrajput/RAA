@@ -9,11 +9,14 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import threading
 from pathlib import Path
 from typing import Any
 
 from raa.utils.time import utc_now
+
+logger = logging.getLogger(__name__)
 
 GENESIS_HASH = "0" * 64
 
@@ -36,7 +39,8 @@ class AuditService:
                     entry = json.loads(line)
                     if isinstance(entry, dict) and "hash" in entry:
                         return str(entry["hash"])
-                except Exception:  # noqa: S112
+                except Exception as exc:
+                    logger.debug("Skipping unreadable audit entry while reading last hash: %s", exc)
                     continue
         except OSError:
             return GENESIS_HASH
@@ -109,7 +113,8 @@ class AuditService:
                 continue
             try:
                 entry = json.loads(line)
-            except Exception:  # noqa: S112
+            except Exception as exc:
+                logger.debug("Skipping unreadable audit entry during query: %s", exc)
                 continue
             if tool and entry.get("tool") != tool:
                 continue
@@ -142,6 +147,7 @@ class AuditService:
 
         expected_prev = GENESIS_HASH
         records_checked = 0
+        seen_hashed = False
 
         for line_no, raw_line in enumerate(lines, start=1):
             line = raw_line.strip()
@@ -164,7 +170,18 @@ class AuditService:
             recorded_prev = entry.get("prev_hash")
 
             if recorded_hash is None or recorded_prev is None:
-                # Legacy unhashed record; accept but reset chain anchor
+                if seen_hashed:
+                    return {
+                        "valid": False,
+                        "records_checked": records_checked,
+                        "broken_at_line": line_no,
+                        "tampered": True,
+                        "error": (
+                            f"Unhashed audit entry encountered at line {line_no} "
+                            "after hash chain started."
+                        ),
+                    }
+                # Legacy unhashed record before the first hashed entry
                 records_checked += 1
                 continue
 
@@ -194,6 +211,7 @@ class AuditService:
                     ),
                 }
 
+            seen_hashed = True
             expected_prev = recorded_hash
             records_checked += 1
 

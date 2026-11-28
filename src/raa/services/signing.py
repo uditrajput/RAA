@@ -4,17 +4,30 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import logging
+import os
+import secrets
 from pathlib import Path
 from typing import Any
 
-DEFAULT_SIGNING_KEY = "raa-enterprise-root-trust-anchor-2026"
+logger = logging.getLogger(__name__)
 
 
 class SigningService:
     """Provides cryptographic signature verification for skills, recipes, and engine manifests."""
 
     def __init__(self, trust_key: str | None = None) -> None:
-        self.trust_key = trust_key or DEFAULT_SIGNING_KEY
+        resolved_key = (trust_key or os.environ.get("RAA_SIGNING_KEY", "")).strip()
+        if not resolved_key:
+            resolved_key = secrets.token_hex(32)
+            self.ephemeral = True
+            logger.debug(
+                "RAA_SIGNING_KEY is not set and no trust_key was provided; "
+                "generated an ephemeral per-process signing key."
+            )
+        else:
+            self.ephemeral = False
+        self.trust_key = resolved_key
 
     def sign(self, data: str | bytes, key: str | None = None) -> str:
         """Generate a deterministic HMAC-SHA256 signature for the given payload."""

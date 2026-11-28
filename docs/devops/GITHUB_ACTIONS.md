@@ -9,7 +9,7 @@
 - **Job `integration-tests`:** Runs full integration test suites covering end-to-end multi-phase reverse engineering flows.
 
 ### 2. `mcp-tests.yml` – MCP Server & Tool Validation
-- **Job `mcp-tests`:** Validates MCP HTTP/stdio server startup, tool registration across all 322 implemented tools, input schema correctness, profile constraints (`minimal`, `core`, `dynamic`, `ui`, `api`, `admin`, `full`), error envelopes, and agent skill registrations.
+- **Job `mcp-tests`:** Validates MCP HTTP/stdio server startup, tool registration across all 377 implemented tools, input schema correctness, profile constraints (`minimal`, `core`, `dynamic`, `ui`, `api`, `admin`, `swarm`, `full`), error envelopes, and agent skill registrations.
 
 ### 3. `android-engines.yml` – Android Engine Integration
 - **Job `android-engine-tests`:** Configures Java 17 Temurin, probes native binary availability (JADX, Apktool, Ghidra, Rizin), executes engine discovery, tests engine adapters, and validates DEX/manifest/resource parsing using synthetic test fixtures.
@@ -26,7 +26,7 @@
 - **Job `codeql-analysis`:** Runs GitHub CodeQL engine for Python with the `security-and-quality` query suite. Results are uploaded to GitHub Security tab.
 
 ### 7. `documentation.yml` – Documentation & Agent Skill Validation
-- **Job `documentation-check`:** Verifies Markdown formatting, UTF-8 file integrity, and validates all 11 Agent Skills YAML frontmatters and required files.
+- **Job `documentation-check`:** Verifies Markdown formatting, UTF-8 file integrity, and validates all 23 Agent Skills YAML frontmatters and required files.
 
 ### 8. `release.yml` – Production Release Pipeline
 - **Job `pre-release-check`:** Verifies full production test suite passes before release.

@@ -40,27 +40,37 @@ from raa.services.api_service import ApiService
 from raa.services.artifacts import ArtifactService
 from raa.services.audit import AuditService
 from raa.services.backup import BackupService
+from raa.services.cadence import CadenceService
+from raa.services.channels.gateway import ChannelGatewayService
 from raa.services.cognitive import CognitiveAuditService
+from raa.services.debloat import AndroidDebloatService
 from raa.services.diff_service import DiffService
 from raa.services.dynamic import DynamicService
 from raa.services.engine_runner import EngineRunner
 from raa.services.engines import EngineService
 from raa.services.enterprise import EnterpriseIntegrationService
 from raa.services.evidence import EvidenceService
+from raa.services.mcp_mesh import McpMeshService
 from raa.services.metrics import MetricsService
 from raa.services.offensive import OffensiveSecurityService
+from raa.services.playstore import PlayStoreService
 from raa.services.projects import ProjectService
 from raa.services.rebuild_service import RebuildService
 from raa.services.recipes import RecipeService
 from raa.services.sbom import SbomService
 from raa.services.security_service import SecurityService
+from raa.services.self_evolution import SelfEvolutionService
 from raa.services.signing import SigningService
 from raa.services.skills import SkillService
 from raa.services.swarm import SwarmService
 from raa.services.tenancy import TenancyService
+from raa.services.tool_manager import ToolManagerService
+from raa.services.tv_studio import TvStudioService
 from raa.services.ui import UIService
 from raa.services.ui_reconstruction import UIReconstructionService
 from raa.services.unpacking_service import UnpackingService
+from raa.services.vault import VaultShieldService
+from raa.services.wireless_gateway import WirelessGatewayService
 from raa.services.workspace import Workspace
 from raa.storage.database import Database
 from raa.storage.repositories import (
@@ -97,6 +107,12 @@ class Runtime:
             workspace=self.workspace,
             repository=artifact_repository,
             projects=self.projects,
+            evidence=self.evidence,
+        )
+        self.playstore = PlayStoreService(
+            settings=settings,
+            workspace=self.workspace,
+            artifacts=self.artifacts,
             evidence=self.evidence,
         )
         self.analysis = AnalysisService(
@@ -172,6 +188,41 @@ class Runtime:
         self.ui_reconstruction = UIReconstructionService(self.workspace.root)
         self.enterprise = EnterpriseIntegrationService(self.workspace.root)
         self.offensive = OffensiveSecurityService(self.workspace.root)
+        self.tool_manager = ToolManagerService(
+            workspace_root=self.workspace.root,
+            managed_dir=settings.tools_managed_dir,
+        )
+        self.vault = VaultShieldService(self.workspace.root)
+        self.channels = ChannelGatewayService(
+            workspace_root=self.workspace.root,
+            telegram_token=settings.telegram_bot_token.get_secret_value()
+            if settings.telegram_bot_token
+            else None,
+            telegram_allowed=settings.telegram_allowed_users,
+            whatsapp_phone=settings.whatsapp_phone,
+            whatsapp_token=settings.whatsapp_api_token.get_secret_value()
+            if settings.whatsapp_api_token
+            else None,
+            whatsapp_mode=settings.whatsapp_mode,
+            vault=self.vault,
+        )
+        self.cadence = CadenceService(
+            default_mode=settings.cadence_mode,
+            default_interval_minutes=settings.cadence_interval_minutes,
+            urgent_cve_breakin=settings.cadence_urgent_cve_breakin,
+        )
+        self.self_evolution = SelfEvolutionService(self.workspace.root)
+        self.mcp_mesh = McpMeshService(
+            workspace_root=self.workspace.root,
+            store_file=settings.mcp_mesh_store,
+            vault=self.vault,
+        )
+        self.wireless_gateway = WirelessGatewayService(
+            workspace_root=self.workspace.root,
+            default_host=settings.wireless_device_host,
+        )
+        self.tv_studio = TvStudioService(self.workspace.root)
+        self.debloat = AndroidDebloatService(self.workspace.root)
         self.metrics = MetricsService(
             workspace=self.workspace,
             database=self.database,
@@ -195,7 +246,7 @@ class Runtime:
             "skills": self._skill_summary(),
             "extensions": {
                 "tasks": "planned",
-                "skills": "planned",
+                "skills": "active",
                 "mcp_apps": "planned",
             },
             "scopes": sorted(ALL_SCOPES),

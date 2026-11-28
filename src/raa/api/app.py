@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
+import logging
+import os
 import secrets
 import uuid
 from collections.abc import AsyncIterator
@@ -12,12 +15,15 @@ from fastapi import Depends, FastAPI, File, Header, HTTPException, Request, Uplo
 from pydantic import BaseModel, ConfigDict, Field
 from starlette.status import HTTP_401_UNAUTHORIZED
 
+from raa.api.setup_ui import router as setup_ui_router
 from raa.config import ProfileName, Settings
 from raa.errors import LimitExceededError, RAAError
 from raa.registry.profiles import ALL_PROFILES
 from raa.runtime import Runtime
 from raa.services.workspace import sanitize_filename
 from raa.version import __version__
+
+logger = logging.getLogger(__name__)
 
 
 class ApiModel(BaseModel):
@@ -45,9 +51,33 @@ def create_app(runtime: Runtime | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         del app
+
+        async def _auto_poll_channels() -> None:
+            while True:
+                try:
+                    await asyncio.sleep(0.5)
+                    ch = active_runtime.channels
+                    tg_ready = ch.telegram.is_configured()
+                    wa_ready = bool(ch.whatsapp.paired or ch.whatsapp.is_configured())
+                    if tg_ready or wa_ready:
+                        await asyncio.to_thread(ch.poll_and_dispatch, "all", active_runtime)
+                except asyncio.CancelledError:
+                    break
+                except Exception as exc:
+                    logger.debug("Channel auto-poll iteration failed: %s", exc)
+
+        poll_task = (
+            asyncio.create_task(_auto_poll_channels())
+            if not os.environ.get("PYTEST_CURRENT_TEST")
+            else None
+        )
         try:
             yield
         finally:
+            if poll_task is not None:
+                poll_task.cancel()
+                with suppress(asyncio.CancelledError):
+                    await poll_task
             await active_runtime.aclose()
 
     app = FastAPI(
@@ -89,6 +119,7 @@ def create_app(runtime: Runtime | None = None) -> FastAPI:
             await self.app(scope, receive, send_wrapper)
 
     app.add_middleware(SecurityHeadersMiddleware)
+    app.include_router(setup_ui_router, dependencies=[Depends(authorize)])
 
     @app.get("/healthz", tags=["system"])
     async def healthz() -> dict[str, Any]:

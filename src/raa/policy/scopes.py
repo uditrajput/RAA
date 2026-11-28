@@ -19,6 +19,9 @@ EXPORT_RAW = "export.raw"
 DYNAMIC_DEVICE = "dynamic.device"
 DYNAMIC_INSTRUMENT = "dynamic.instrument"
 NETWORK_CAPTURE = "network.capture"
+NETWORK_OSINT = "network.osint"
+NETWORK_CRAWL = "network.crawl"
+NETWORK_FETCH = "network.fetch"
 ANDROID_INSTALL = "android.install"
 ANDROID_PATCH = "android.patch"
 ANDROID_SIGN = "android.sign"
@@ -35,6 +38,9 @@ ALL_SCOPES: frozenset[str] = frozenset(
         DYNAMIC_DEVICE,
         DYNAMIC_INSTRUMENT,
         NETWORK_CAPTURE,
+        NETWORK_OSINT,
+        NETWORK_CRAWL,
+        NETWORK_FETCH,
         ANDROID_INSTALL,
         ANDROID_PATCH,
         ANDROID_SIGN,
@@ -49,6 +55,9 @@ DANGEROUS_SCOPES: frozenset[str] = frozenset(
         DYNAMIC_DEVICE,
         DYNAMIC_INSTRUMENT,
         NETWORK_CAPTURE,
+        NETWORK_OSINT,
+        NETWORK_CRAWL,
+        NETWORK_FETCH,
         ANDROID_INSTALL,
         ANDROID_PATCH,
         ANDROID_SIGN,

@@ -162,3 +162,11 @@ async def test_api_authentication(tmp_path: Path) -> None:
             headers={"Authorization": "Bearer wrong"},
         )
         assert wrong.status_code == 401
+
+        setup_unauth = await client.get("/api/setup/status")
+        assert setup_unauth.status_code == 401
+        setup_auth = await client.get(
+            "/api/setup/status",
+            headers={"Authorization": "Bearer super-secret-token"},
+        )
+        assert setup_auth.status_code == 200

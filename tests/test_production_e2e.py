@@ -30,9 +30,8 @@ from raa.version import PLANNED_TOOL_COUNT, PROTOCOL_VERSION, __version__
 @pytest.mark.asyncio
 async def test_all_244_tools_registry_integrity(runtime: Runtime) -> None:
     tools = runtime.registry.all()
-    assert len(tools) == 322
     assert len(tools) == PLANNED_TOOL_COUNT
-    assert runtime.registry.count() == 322
+    assert runtime.registry.count() == PLANNED_TOOL_COUNT
 
     seen_names: set[str] = set()
     for spec in tools:
@@ -67,7 +66,7 @@ async def test_all_244_tools_registry_integrity(runtime: Runtime) -> None:
 @pytest.mark.asyncio
 async def test_mcp_surface_lists_all_tools_with_schemas(runtime: Runtime) -> None:
     result = await list_tools_result(runtime, "full")
-    assert len(result.tools) == 322
+    assert len(result.tools) == PLANNED_TOOL_COUNT
 
     for mcp_tool in result.tools:
         assert mcp_tool.name
@@ -84,13 +83,13 @@ async def test_all_profile_target_counts_and_hierarchy(runtime: Runtime) -> None
 
     expected_counts = {
         "minimal": 12,
-        "core": 180,
-        "dynamic": 218,
-        "api": 180,
-        "ui": 180,
+        "core": 232,
+        "dynamic": 273,
+        "api": 234,
+        "ui": 233,
         "admin": 42,
-        "swarm": 150,
-        "full": 322,
+        "swarm": 202,
+        "full": 379,
     }
     for prof, expected_count in expected_counts.items():
         assert profiles[prof] == expected_count, (
@@ -131,7 +130,7 @@ async def test_admin_doctor_production_status(runtime: Runtime) -> None:
     assert data["database_ok"] is True
     assert data["workspace_writable"] is True
     assert bool(data["mcp_sdk"]) is True
-    assert data["implemented_tools"] == 322
+    assert data["implemented_tools"] == PLANNED_TOOL_COUNT
     assert data["engines"]["catalogued"] >= 20
 
 
@@ -154,10 +153,10 @@ async def test_production_rest_security_headers() -> None:
         # Verify package metadata
         body = res.json()
         assert body["version"] == __version__
-        assert body["version"] == "3.0.0"
+        assert body["version"] == "4.0.0"
 
 
 def test_production_version_constants() -> None:
-    assert __version__ == "3.0.0"
+    assert __version__ == "4.0.0"
     assert PROTOCOL_VERSION == "2026-07-28"
-    assert PLANNED_TOOL_COUNT == 322
+    assert PLANNED_TOOL_COUNT == 379

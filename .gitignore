@@ -27,6 +27,7 @@ env/
 .pip-cache/
 .uv-cache/
 .pytest-tmp/
+.pytest-tmp*/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
@@ -43,6 +44,7 @@ reports/
 # --- RAA Runtime State & Local Databases ---
 .raa-workspace/
 .raa/
+config/
 .tmp/
 tmp/
 temp/

@@ -12,7 +12,7 @@ All workflows run in isolated environments with least-privilege tokens, pinned t
 | Workflow File | Workflow Name | Stable Job Checks | Trigger Conditions | Purpose |
 | :--- | :--- | :--- | :--- | :--- |
 | `ci.yml` | `CI` | `lint-and-format`<br>`build`<br>`unit-tests`<br>`integration-tests` | Push to `main`, `feature`, `bugfix/**`<br>PR to `main`<br>`workflow_dispatch` | Core compilation, package validation, linting, unit & multi-phase integration tests |
-| `mcp-tests.yml` | `MCP Validation` | `mcp-tests` | Push to `main`, `feature`, `bugfix/**`<br>PR to `main`<br>`workflow_dispatch` | Model Context Protocol server validation, tool registry integrity (322 tools), profiles & schemas |
+| `mcp-tests.yml` | `MCP Validation` | `mcp-tests` | Push to `main`, `feature`, `bugfix/**`<br>PR to `main`<br>`workflow_dispatch` | Model Context Protocol server validation, tool registry integrity (377 tools), profiles & schemas |
 | `android-engines.yml` | `Android Engines` | `android-engine-tests` | Push to `main`, `feature`, `bugfix/**`<br>PR to `main`<br>`workflow_dispatch` | Decompilation engine discovery, adapters (JADX, Apktool, Ghidra), DEX & manifest parsing |
 | `ui-tests.yml` | `UI Reconstruction` | `ui-tests` | Push to `main`, `feature`, `bugfix/**`<br>PR to `main`<br>`workflow_dispatch` | UI visual hierarchy, Layout extraction, XML modernization, screenshot processing |
 | `security.yml` | `Security` | `secret-detection`<br>`dependency-audit`<br>`security-tests` | Push to `main`, `feature`, `bugfix/**`<br>PR to `main`<br>`workflow_dispatch` | Secret detection (Gitleaks), dependency vulnerabilities (pip-audit), SAST (Semgrep) |

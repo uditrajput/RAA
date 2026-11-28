@@ -19,7 +19,7 @@ from raa.services.asset_studio import (
     generate_notification_silhouette,
     generate_play_store_banner,
 )
-from raa.services.ax_tree_pruner import prune_ax_tree
+from raa.services.ax_tree_pruner import fuse_ui_tree_and_screenshot, prune_ax_tree
 from raa.services.semantic_compose import diff_compose_parity, modernize_xml_to_compose
 
 
@@ -665,6 +665,32 @@ def _ui_spec(
     )
 
 
+class UiTreeScreenshotFuseInput(BaseModel):
+    """Parameters to fuse UI accessibility tree bounds with screenshot coordinates."""
+
+    hierarchy_xml: str | None = Field(default=None, description="UIAutomator XML hierarchy.")
+    hierarchy_dict: dict[str, Any] | None = Field(
+        default=None, description="JSON accessibility hierarchy."
+    )
+    screen_width: int = Field(default=1080, ge=1, description="Device screen width in pixels.")
+    screen_height: int = Field(default=2400, ge=1, description="Device screen height in pixels.")
+    screenshot_path: str | None = Field(default=None, description="Optional screenshot path.")
+
+
+async def _ui_tree_screenshot_fuse(
+    ctx: ToolContext, args: UiTreeScreenshotFuseInput
+) -> ToolOutcome:
+    del ctx
+    res = fuse_ui_tree_and_screenshot(
+        hierarchy_xml=args.hierarchy_xml,
+        hierarchy_dict=args.hierarchy_dict,
+        screen_width=args.screen_width,
+        screen_height=args.screen_height,
+        screenshot_path=args.screenshot_path,
+    )
+    return ToolOutcome(data=res)
+
+
 def register(registry: CapabilityRegistry) -> None:
     registry.register(
         _ui_spec(
@@ -951,6 +977,22 @@ def register(registry: CapabilityRegistry) -> None:
             handler=_ui_notification_icon_audit,
             input_model=UiNotificationIconAuditInput,
             profiles=UI,
+            scopes=frozenset(),
+            read_only=True,
+            idempotent=True,
+        )
+    )
+    registry.register(
+        _ui_spec(
+            name="ui_tree_screenshot_fuse",
+            title="Fuse UI Accessibility Tree With Screenshot Coordinates",
+            description=(
+                "Prune Android/iOS accessibility hierarchies and compute normalized [0..1000] "
+                "bounding boxes and pixel tap centers (mobilerun-inspired)."
+            ),
+            handler=_ui_tree_screenshot_fuse,
+            input_model=UiTreeScreenshotFuseInput,
+            profiles=UI | DYNAMIC,
             scopes=frozenset(),
             read_only=True,
             idempotent=True,

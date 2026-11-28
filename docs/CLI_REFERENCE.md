@@ -1,10 +1,10 @@
 # RAA (Reverse Android Anything) — Complete CLI Reference Guide
 
-> **Platform:** Reverse Android Anything (RAA) v3.0.0 Production  
-> **Total Available CLI Commands:** 311 commands  
-> **Protocol Version:** 2026-07-28 | **Tool Equivalents:** 322 Tools
+> **Platform:** Reverse Android Anything (RAA) v4.0.0 Production  
+> **Total Available CLI Commands:** 345 commands  
+> **Protocol Version:** 2026-07-28 | **Tool Equivalents:** 379 Tools
 
-This document provides an exhaustive, production-grade reference for all 311 command-line commands across all sub-apps in RAA.
+This document provides an exhaustive, production-grade reference for all 345 command-line commands across all 38 sub-apps in RAA.
 
 Every CLI command is backed by the exact same capability registry and runtime models that power RAA's MCP, REST, and Python SDK surfaces.
 
@@ -15,21 +15,24 @@ Every CLI command is backed by the exact same capability registry and runtime mo
 | [`raa admin`](#admin-commands) | 13 | Engine catalogs, ZTNA gateways, quotas, and audit trails |
 | [`raa ai`](#ai-commands) | 3 | On-device AI model extraction (TFLite, ONNX, PyTorch Mobile) |
 | [`raa api`](#api-commands) | 24 | API endpoint discovery, OpenAPI schemas, and traffic capturing |
-| [`raa artifact`](#artifact-commands) | 3 | Artifact ingestion, cataloguing, and binary file enumeration |
+| [`raa artifact`](#artifact-commands) | 6 | Artifact ingestion, cataloguing, and binary file enumeration |
 | [`raa binary`](#binary-commands) | 18 | Next-gen decompilers (RetDec LLVM, Kuna Rust), GDB/MI, and Apple Mach-O |
 | [`raa canvas`](#canvas-commands) | 20 | Autonomous UI screen reconstruction, shaders, and Sodu CI/CD |
+| [`raa channel`](#channel-commands) | 4 | Two-way mobile channels (Telegram, WhatsApp), cadence, and APK delivery |
 | [`raa cognitive`](#cognitive-commands) | 9 | Dual-context adversarial audit and exploit payoff simulation |
-| [`raa device`](#device-commands) | 4 | ADB device management, USB hardware, and screen mirrors |
+| [`raa debloat`](#debloat-commands) | 3 | Subsystem commands |
+| [`raa device`](#device-commands) | 8 | ADB device management, USB hardware, and screen mirrors |
 | [`raa diff`](#diff-commands) | 4 | Binary, manifest, DEX, and permission differential comparison |
 | [`raa dotnet`](#dotnet-commands) | 2 | Xamarin / .NET MAUI DLL assembly inspection |
 | [`raa dynamic`](#dynamic-commands) | 46 | Frida hooks, memory dumps, network tracing, and dynamic fuzzer |
 | [`raa enterprise`](#enterprise-commands) | 12 | Enterprise MCP mesh, universal 7-CLI dispatcher, Nacos, WASM |
 | [`raa flutter`](#flutter-commands) | 7 | Flutter asset, symbol, BoringSSL pinning, and engine inspection |
 | [`raa framework`](#framework-commands) | 2 | Framework detection and application capability querying |
-| [`raa global`](#global-commands) | 11 | Core CLI bootstrap, status, doctor, report, manifest & permissions |
+| [`raa global`](#global-commands) | 12 | Core CLI bootstrap, status, doctor, setup wizard, report, manifest & permissions |
 | [`raa graph`](#graph-commands) | 2 | AAIR dependency and cross-reference call graph querying |
+| [`raa mcp-mesh`](#mcp-mesh-commands) | 7 | Dynamic external MCP server connectors, health probes, and vault injection |
 | [`raa native`](#native-commands) | 4 | ELF shared library symbol extraction and ARM64 disassembly |
-| [`raa offensive`](#offensive-commands) | 10 | Offensive security operations, Yaklang playbooks, and v3 benchmarks |
+| [`raa offensive`](#offensive-commands) | 10 | Offensive security operations, Yaklang playbooks, and benchmarks |
 | [`raa platform`](#platform-commands) | 7 | Multi-OS cross-platform target inspection (iOS, HarmonyOS, Linux) |
 | [`raa project`](#project-commands) | 3 | Workspace project creation, lifecycle and scope inspection |
 | [`raa react-native`](#react-native-commands) | 4 | React Native Hermes bytecode, bundle, and module inspection |
@@ -37,11 +40,13 @@ Every CLI command is backed by the exact same capability registry and runtime mo
 | [`raa recipe`](#recipe-commands) | 3 | Multi-stage automated analysis and workflow macro execution |
 | [`raa security`](#security-commands) | 33 | MASTG audits, Play Protect pre-flight, and vulnerability triage |
 | [`raa serve`](#serve-commands) | 2 | MCP stdio / SSE and REST API daemon servers |
-| [`raa skill`](#skill-commands) | 3 | Antigravity Agent Skills catalogue, install and execution |
+| [`raa skill`](#skill-commands) | 5 | Antigravity Agent Skills catalogue, install and execution |
+| [`raa skills`](#skills-commands) | 5 | Self-evolving dynamic procedural skill saving, patching, and memory updates |
 | [`raa source`](#source-commands) | 12 | DEX decompiler dispatch, class searching, and source recovery |
 | [`raa swarm`](#swarm-commands) | 8 | Multi-agent swarm governance, token budgeting, and blackboard |
 | [`raa test`](#test-commands) | 2 | Automated UI and unit testing harness runs |
-| [`raa tools`](#tools-commands) | 5 | Tool discovery, schema inspection, and raw profile-scoped invocation |
+| [`raa tools`](#tools-commands) | 7 | Tool discovery, schema inspection, toolchain management, and raw profile-scoped invocation |
+| [`raa tv`](#tv-commands) | 3 | Android TV / Google TV 10-foot Living Canvas UI redesign and wireless Perfetto benchmarks |
 | [`raa ui`](#ui-commands) | 21 | View hierarchies, Jetpack Compose, Apple HIG, and shaders |
 | [`raa unity`](#unity-commands) | 3 | Unity il2cpp, metadata, and asset bundle extraction |
 | [`raa unpack`](#unpack-commands) | 5 | APK/AAB/XAPK/APKM unpacking, extraction, and rebuilding |
@@ -111,13 +116,16 @@ Every CLI command is backed by the exact same capability registry and runtime mo
 
 ## Artifact Commands
 
-**Group:** `raa artifact` | **Total Commands:** 3
+**Group:** `raa artifact` | **Total Commands:** 6
 
 | Command | Description |
 |---|---|
 | `raa artifact ingest` | Ingest an APK/AAB/APKS/XAPK into a project. |
 | `raa artifact list` | List artifacts in a project. |
 | `raa artifact files` | List archive members without extracting them. |
+| `raa artifact playstore-info` | Fetch public Google Play Store metadata for an app. |
+| `raa artifact playstore-download` | Download an Android app from Google Play Store via AVD Manager or fallback provider. |
+| `raa artifact apkeep-download` | Download an Android app via efforg/apkeep (Google Play first priority). |
 
 ## Binary Commands
 
@@ -171,6 +179,17 @@ Every CLI command is backed by the exact same capability registry and runtime mo
 | `raa canvas sodu-cicd` | Execute closed-loop decompile-patch-build-verify pipeline with automated rollback. |
 | `raa canvas gh-actions-gen` | Generate GitHub Actions CI/CD workflow YAML for Android building and v2/v3 signing. |
 
+## Channel Commands
+
+**Group:** `raa channel` | **Total Commands:** 4
+
+| Command | Description |
+|---|---|
+| `raa channel test` | Send verification ping to configured Telegram or WhatsApp. |
+| `raa channel pair` | Display terminal QR code for local WhatsApp Web pairing. |
+| `raa channel intensity set` | Set cadence: start/end, 1m, 2m, 5m, 10m, or custom. |
+| `raa channel intensity status` | Display active notification cadence and stats. |
+
 ## Cognitive Commands
 
 **Group:** `raa cognitive` | **Total Commands:** 9
@@ -187,9 +206,19 @@ Every CLI command is backed by the exact same capability registry and runtime mo
 | `raa cognitive whitepaper` | Synthesize academic-grade vulnerability research whitepaper via Dr. Claw. |
 | `raa cognitive haystack` | Query decompiled code repositories using Haystack hybrid RAG search. |
 
+## Debloat Commands
+
+**Group:** `raa debloat` | **Total Commands:** 3
+
+| Command | Description |
+|---|---|
+| `raa debloat inspect` | Inspect Android packages and classify them with UAD safety tiers. |
+| `raa debloat apply` | Preview or apply rootless ADB debloating with automatic backup and undo scripts. |
+| `raa debloat restore` | Restore previously debloated packages from a JSON backup file. |
+
 ## Device Commands
 
-**Group:** `raa device` | **Total Commands:** 4
+**Group:** `raa device` | **Total Commands:** 8
 
 | Command | Description |
 |---|---|
@@ -197,6 +226,10 @@ Every CLI command is backed by the exact same capability registry and runtime mo
 | `raa device lease` | Lease a clean device exclusively for a project. |
 | `raa device release` | Release a device and restore it to a clean baseline. |
 | `raa device snapshot` | Create or restore a disposable device snapshot. |
+| `raa device pair` | Pair Android device/TV over Wi-Fi (Android 11+ TLS). |
+| `raa device connect` | Connect to Android device/TV over Wi-Fi (zero-binary). |
+| `raa device status` | Check wireless device connection, battery and port state. |
+| `raa device push-apk` | Install APK over Wi-Fi using resilient chunking. |
 
 ## Diff Commands
 
@@ -315,12 +348,12 @@ Every CLI command is backed by the exact same capability registry and runtime mo
 
 ## Global Commands
 
-**Group:** `raa global` | **Total Commands:** 11
+**Group:** `raa global` | **Total Commands:** 12
 
 | Command | Description |
 |---|---|
 | `raa version` | Print package and protocol versions. |
-| `raa init` | Create the local workspace and database. |
+| `raa init` | Create the local workspace and database (and launch Setup UI on first run). |
 | `raa doctor` | Check workspace, database, MCP SDK and engine availability. |
 | `raa analyze` | Run the built-in static analysis and print the report summary. |
 | `raa report` | Export a completed report to the workspace. |
@@ -329,7 +362,8 @@ Every CLI command is backed by the exact same capability registry and runtime mo
 | `raa permissions` | List requested permissions, declared permissions and features. |
 | `raa resources` | List decoded resources with type, configuration and default values. |
 | `raa resource` | Show every configuration variant of one resource. |
-| `raa setup` | Print or write an MCP client configuration snippet. |
+| `raa setup-ui` | Start the RAA Setup & Tool Manager Web UI server. |
+| `raa setup` | Launch interactive setup & tool manager web UI, register skip, or print MCP client config. |
 
 ## Graph Commands
 
@@ -339,6 +373,20 @@ Every CLI command is backed by the exact same capability registry and runtime mo
 |---|---|
 | `raa graph query` | Traverse and query the AAIR entity and relationship graph. |
 | `raa graph neighborhood` | Retrieve local graph neighborhood around an AAIR entity. |
+
+## Mcp-mesh Commands
+
+**Group:** `raa mcp-mesh` | **Total Commands:** 7
+
+| Command | Description |
+|---|---|
+| `raa mcp-mesh list` | List connected external MCP servers and tools. |
+| `raa mcp-mesh connect` | Connect new external MCP server. |
+| `raa mcp-mesh inspect` | Inspect tools, schemas and status of an MCP server. |
+| `raa mcp-mesh test` | Test JSON-RPC handshake and latency probe. |
+| `raa mcp-mesh disconnect` | Disconnect and unregister external MCP tools. |
+| `raa mcp-mesh list-tools` | Query live tools/list from a connected external MCP server. |
+| `raa mcp-mesh call` | Invoke a tool on a connected external MCP server through RAA. |
 
 ## Native Commands
 
@@ -477,13 +525,27 @@ Every CLI command is backed by the exact same capability registry and runtime mo
 
 ## Skill Commands
 
-**Group:** `raa skill` | **Total Commands:** 3
+**Group:** `raa skill` | **Total Commands:** 5
 
 | Command | Description |
 |---|---|
 | `raa skill list` | List available Agent Skills. |
 | `raa skill show` | Print a skill's SKILL.md. |
 | `raa skill install` | Copy skills into a workspace-local directory. |
+| `raa skill list-evolved` | List dynamically learned recipes and patches. |
+| `raa skill inspect` | View verified steps, selectors, and patch history. |
+
+## Skills Commands
+
+**Group:** `raa skills` | **Total Commands:** 5
+
+| Command | Description |
+|---|---|
+| `raa skills list` | List available Agent Skills. |
+| `raa skills show` | Print a skill's SKILL.md. |
+| `raa skills install` | Copy skills into a workspace-local directory. |
+| `raa skills list-evolved` | List dynamically learned recipes and patches. |
+| `raa skills inspect` | View verified steps, selectors, and patch history. |
 
 ## Source Commands
 
@@ -530,7 +592,7 @@ Every CLI command is backed by the exact same capability registry and runtime mo
 
 ## Tools Commands
 
-**Group:** `raa tools` | **Total Commands:** 5
+**Group:** `raa tools` | **Total Commands:** 7
 
 | Command | Description |
 |---|---|
@@ -539,6 +601,18 @@ Every CLI command is backed by the exact same capability registry and runtime mo
 | `raa tools call` | Call a tool through the registry. |
 | `raa tools search` | Search capability registry by semantic keywords, descriptions, and reversing goals. |
 | `raa tools termux-harness` | Configure an on-device PRoot reversing and patch harness in Termux. |
+| `raa tools install` | Download, verify, and auto-configure tool path. |
+| `raa tools delete` | Uninstall tool and reclaim disk space. |
+
+## Tv Commands
+
+**Group:** `raa tv` | **Total Commands:** 3
+
+| Command | Description |
+|---|---|
+| `raa tv redesign` | Redesign Android TV app into Compose for TV M3. |
+| `raa tv diff` | Compare original vs redesigned TV screens with masking. |
+| `raa tv bench` | Run wireless cold start and memory PSS benchmark. |
 
 ## Ui Commands
 

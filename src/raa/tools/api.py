@@ -9,7 +9,7 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from raa.domain.api import OpenAPISpec
-from raa.policy.scopes import EXPORT_RAW, EXPORT_WRITE, NETWORK_CAPTURE, PROJECT_READ
+from raa.policy.scopes import EXPORT_RAW, EXPORT_WRITE, NETWORK_CAPTURE, NETWORK_CRAWL, PROJECT_READ
 from raa.registry.models import (
     CapabilityRegistry,
     ToolAnnotations,
@@ -22,6 +22,7 @@ from raa.services.api.endpoint_crawler import (
     audit_privacy_policy,
     crawl_endpoint_documentation,
 )
+from raa.services.api.web_recon import crawl_backend_surface
 
 # --- Input Models ---
 
@@ -173,6 +174,14 @@ class ApiExportPostmanInput(BaseModel):
     base_url_variable: str = Field(default="baseUrl", description="Base URL variable name.")
 
 
+class ApiExportHoppscotchInput(BaseModel):
+    """Parameters to export synthesized endpoints to Hoppscotch v2 JSON collection."""
+
+    project_id: str = Field(min_length=1, description="Target project identifier.")
+    collection_name: str | None = Field(default=None, description="Optional collection name.")
+    base_url: str = Field(default="<<baseUrl>>", description="Hoppscotch environment base URL.")
+
+
 class CrawlEndpointDocsInput(BaseModel):
     """Parameters to autonomously extract REST API endpoints and schemas from documentation."""
 
@@ -247,6 +256,15 @@ class ApiBypass403TestInput(BaseModel):
     base_headers: dict[str, str] | None = Field(
         default=None, description="Optional base request headers."
     )
+
+
+class ApiBackendReconInput(BaseModel):
+    """Parameters to crawl extracted mobile backend URLs for endpoints, subdomains, and secrets."""
+
+    project_id: str = Field(min_length=1, description="Target project ID with network.crawl scope.")
+    base_urls: list[str] = Field(min_length=1, description="Seed HTTP/HTTPS URLs to crawl.")
+    max_depth: int = Field(default=2, ge=0, le=5, description="Maximum link traversal depth.")
+    max_pages: int = Field(default=25, ge=1, le=200, description="Maximum pages to fetch.")
 
 
 class ApiRotatingProxySessionInput(BaseModel):
@@ -452,6 +470,15 @@ async def _api_export_postman(ctx: ToolContext, args: ApiExportPostmanInput) -> 
     return ToolOutcome(data=res)
 
 
+async def _api_export_hoppscotch(ctx: ToolContext, args: ApiExportHoppscotchInput) -> ToolOutcome:
+    res = ctx.runtime.api.export_hoppscotch(
+        project_id=args.project_id,
+        collection_name=args.collection_name,
+        base_url=args.base_url,
+    )
+    return ToolOutcome(data=res)
+
+
 def _read_text_file(path_str: str | None) -> str | None:
     if not path_str:
         return None
@@ -527,6 +554,16 @@ async def _api_rotating_proxy_session(
         max_retries=args.max_retries,
         backoff_factor=args.backoff_factor,
         rotate_on_status=args.rotate_on_status,
+    )
+    return ToolOutcome(data=res)
+
+
+async def _api_backend_recon(ctx: ToolContext, args: ApiBackendReconInput) -> ToolOutcome:
+    del ctx
+    res = await crawl_backend_surface(
+        base_urls=args.base_urls,
+        max_depth=args.max_depth,
+        max_pages=args.max_pages,
     )
     return ToolOutcome(data=res)
 
@@ -842,6 +879,35 @@ def register(registry: CapabilityRegistry) -> None:
             input_model=ApiRotatingProxySessionInput,
             scopes=frozenset(),
             read_only=True,
+            idempotent=True,
+        )
+    )
+    registry.register(
+        _api_spec(
+            name="api_backend_recon",
+            title="Backend Web & JS Endpoint Recon Crawler",
+            description=(
+                "Crawl extracted mobile backend URLs using httpx to harvest JS API endpoints, "
+                "query parameters, subdomains, S3 buckets, and exposed secret tokens."
+            ),
+            handler=_api_backend_recon,
+            input_model=ApiBackendReconInput,
+            scopes=frozenset({NETWORK_CRAWL}),
+            read_only=True,
+            idempotent=True,
+        )
+    )
+    registry.register(
+        _api_spec(
+            name="api_export_hoppscotch",
+            title="Export Hoppscotch v2 API Collection",
+            description=(
+                "Export synthesized or clustered mobile API endpoints to a Hoppscotch v2 JSON collection."
+            ),
+            handler=_api_export_hoppscotch,
+            input_model=ApiExportHoppscotchInput,
+            scopes=frozenset({PROJECT_READ, EXPORT_WRITE}),
+            read_only=False,
             idempotent=True,
         )
     )

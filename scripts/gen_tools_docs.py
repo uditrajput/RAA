@@ -1,7 +1,32 @@
 import json
+import sys
+from pathlib import Path
 
-with open("tools_dump.json", encoding="utf-8") as f:
-    tools = json.load(f)
+ROOT = Path(__file__).resolve().parent.parent
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from raa.runtime import build_registry
+from raa.version import __version__
+
+dump_path = ROOT / "tools_dump.json"
+if dump_path.exists():
+    with dump_path.open(encoding="utf-8") as f:
+        tools = json.load(f)
+else:
+    reg = build_registry()
+    tools = [
+        {
+            "name": s.name,
+            "family": s.family,
+            "title": s.title,
+            "description": s.description,
+            "profiles": sorted(s.profiles),
+            "read_only": bool(getattr(s.annotations, "read_only_hint", not s.mutates_artifact)),
+        }
+        for s in sorted(reg.all(), key=lambda x: x.name)
+    ]
 
 # Define scenarios mapping based on tool families & purposes
 family_scenarios = {
@@ -117,8 +142,43 @@ family_scenarios = {
     },
     "offensive": {
         "title": "Offensive Security, Yaklang HackSkills, GUI Computer-Use & Benchmark",
-        "scenario": "Running automated penetration testing playbooks, 403 bypass mutations, operating desktop reversing GUIs (Ghidra, IDA), and certifying v3.0 quality.",
+        "scenario": "Running automated penetration testing playbooks, 403 bypass mutations, operating desktop reversing GUIs (Ghidra, IDA), and certifying quality gates.",
         "test_scenario": "Trigger Yaklang BOLA playbook and 403 bypass mutator; verify non-destructive proof-of-concept verification receipt generation.",
+    },
+    "toolchain": {
+        "title": "Dynamic Toolchain & Engine Lifecycle Management",
+        "scenario": "Listing, downloading, SHA-256 verifying, auto-PATH injecting, and reclaiming disk space for external reversing engines (JADX, Apktool, Platform-Tools, Ghidra, Frida).",
+        "test_scenario": "Verify tool listing, SHA-256 verification, runtime PATH injection, and safe deletion.",
+    },
+    "channels": {
+        "title": "Two-Way Mobile Agent Channels & Notification Cadence",
+        "scenario": "Receiving natural language prompts from Telegram/WhatsApp, enforcing domain guards, configuring cadence intervals, and delivering rebuilt APKs directly to mobile chat.",
+        "test_scenario": "Send inbound mobile prompt; verify guard enforcement, cadence configuration, and APK delivery receipt.",
+    },
+    "setup": {
+        "title": "Interactive First-Time Setup & Onboarding Console",
+        "scenario": "Launching the embedded React/Tailwind setup wizard on loopback, persisting onboarding state, and handling skip/reopen requests.",
+        "test_scenario": "Invoke open_setup_ui and setup_state_get; verify skip fallback and on-demand reopen.",
+    },
+    "evolution": {
+        "title": "Self-Evolving Procedural Memory & Dynamic Skill Patching",
+        "scenario": "Saving newly discovered reversing procedures, patching outdated recipes, and persisting negative/positive lessons in MEMORY.md.",
+        "test_scenario": "Execute recipe_self_evolve and skills_patch_procedure; verify persistent memory update.",
+    },
+    "vault_shield": {
+        "title": "Zero-Knowledge Secret Vault & Untrusted Content Shielding",
+        "scenario": "Storing mobile test credentials outside LLM prompt context, wrapping untrusted decompiled strings in quarantine blocks, and managing live browser OAuth handoffs.",
+        "test_scenario": "Store secret in vault and wrap untrusted payload; verify redaction and quarantine markers.",
+    },
+    "mcp_mesh": {
+        "title": "Dynamic External MCP Connectors & Bidirectional App Mesh",
+        "scenario": "Connecting, inspecting, health-probing, toggling, and disconnecting external stdio/SSE/streamable-http MCP servers with vault-injected credentials.",
+        "test_scenario": "Register external MCP connector; verify tool discovery, health probe, and clean disconnect.",
+    },
+    "wireless_tv": {
+        "title": "Wireless Device Gateway & Android TV 10-Foot Living Canvas Studio",
+        "scenario": "Cable-free Wi-Fi ADB pairing and resilient base64 APK push, Android TV Compose M3 redesign, screendiff parity verification, and wireless Perfetto benchmarking.",
+        "test_scenario": "Test wireless pairing/push, TV UI redesign synthesis, screendiff masking, and Perfetto trace slicing.",
     },
 }
 
@@ -138,6 +198,10 @@ for t in tools:
         mapped_fam = "security"
     elif fam in ["scm", "browser", "osint", "harness", "governance", "sandbox"]:
         mapped_fam = "enterprise"
+    elif fam in ["agents", "automation", "knowledge", "meta"]:
+        mapped_fam = "swarm"
+    elif fam in ["game"]:
+        mapped_fam = "framework"
     elif fam in [
         "pentest",
         "computer_use",
@@ -153,16 +217,16 @@ for t in tools:
 
     grouped_tools.setdefault(mapped_fam, []).append(t)
 
-with open("docs/TOOLS_INTEGRATION_AND_TEST_SCENARIOS.md", "w", encoding="utf-8") as out:
+out_path = ROOT / "docs" / "TOOLS_INTEGRATION_AND_TEST_SCENARIOS.md"
+with out_path.open("w", encoding="utf-8") as out:
     out.write("# RAA (Reverse Android Anything) — Tools Integration & Test Scenarios Matrix\n\n")
-    out.write("> **System Version:** RAA v3.0.0 Production  \n")
-    out.write("> **Total Implemented Capabilities:** 322 Tools  \n")
+    out.write(f"> **System Version:** RAA v{__version__} Production  \n")
+    out.write(f"> **Total Implemented Capabilities:** {len(tools)} Tools  \n")
     out.write(
-        "> **Supported Profiles:** `minimal`, `core`, `dynamic`, `api`, `ui`, `admin`, `swarm`, `full`  \n"
+        "> **Supported Profiles:** `minimal`, `core`, `dynamic`, `api`, `ui`, `admin`, `swarm`, `full`  \n\n"
     )
-    out.write("> **Test Suite:** 516 Automated End-to-End Tests  \n\n")
     out.write(
-        "This document provides an exhaustive reference of all **322 tools integrated into RAA**, detailing:\n"
+        f"This document provides an exhaustive reference of all **{len(tools)} tools integrated into RAA**, detailing:\n"
     )
     out.write(
         "1. **Tool Purpose & Requirement Case:** In which operational or security scenarios the tool is needed.\n"

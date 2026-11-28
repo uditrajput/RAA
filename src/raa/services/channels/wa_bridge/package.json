@@ -1,0 +1,10 @@
+{
+  "name": "raa-whatsapp-baileys-bridge",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Real WhatsApp Web Baileys bridge for RAA Studio (aligned with Reference app/nod)",
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.16",
+    "qrcode": "^1.5.4"
+  }
+}

@@ -107,7 +107,7 @@ class SkillPackResult(BaseModel):
     skillpack_name: str
     bundle_path: str = "bundles/mobile_pack.skillpack"
     bundle_hash_sha256: str
-    bundle_version: str = "3.0.0"
+    bundle_version: str = "4.0.0"
     verified_compatible: bool = True
     status: str = "success"
     skillpacks: list[str] = Field(default_factory=list)
@@ -319,7 +319,7 @@ class OffensiveSecurityService:
         action: Literal["package", "validate", "install", "list"],
         skillpack_name: str = "mobile_exploit_pack",
     ) -> SkillPackResult:
-        h = hashlib.sha256(f"{skillpack_name}:v3.0.0".encode()).hexdigest()
+        h = hashlib.sha256(f"{skillpack_name}:v4.0.0".encode()).hexdigest()
         status_map = {
             "package": "success",
             "validate": "valid",
@@ -332,19 +332,19 @@ class OffensiveSecurityService:
             skillpack_name=skillpack_name,
             bundle_path=f"bundles/{skillpack_name}.skillpack",
             bundle_hash_sha256=h,
-            bundle_version="3.0.0",
+            bundle_version="4.0.0",
             verified_compatible=True,
             status=status_map.get(action, "success"),
             skillpacks=packs,
         )
 
-    # 9. v3.0 Tamper-Proof Report Seal
+    # 9. v4.0 Tamper-Proof Report Seal
     def generate_audit_tamper_seal_v3(self, report_content: str) -> AuditSealV3Result:
         rep_id = f"rpt_{uuid.uuid4().hex[:8]}"
         rep_sha = hashlib.sha256(report_content.encode()).hexdigest()
         manifest = {
             "report_id": rep_id,
-            "version": "3.0.0",
+            "version": "4.0.0",
             "sha256": rep_sha,
             "sbom_format": "CycloneDX 1.5",
             "signed_by": "RAA Enterprise Production Root Authority",
@@ -358,7 +358,7 @@ class OffensiveSecurityService:
                 "timestamp": datetime.now(UTC).isoformat(),
                 "component": {
                     "name": "RAA Mobile Reverse Engineering & Analysis System",
-                    "version": "3.0.0",
+                    "version": "4.0.0",
                     "type": "application",
                 },
             },

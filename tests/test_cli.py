@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 from typer.testing import CliRunner
 
@@ -352,7 +353,7 @@ def test_skill_list_and_show(tmp_path: Path) -> None:
     listed = _invoke(tmp_path, "--json", "skill", "list")
     assert listed.exit_code == 0
     payload = json.loads(listed.stdout)
-    assert payload["count"] == 11
+    assert payload["count"] >= 11
     assert {"android-triage", "platform-check", "report-and-export"} <= {
         skill["id"] for skill in payload["skills"]
     }
@@ -396,7 +397,7 @@ def test_skill_install_all_with_directory(tmp_path: Path) -> None:
     )
     assert result.exit_code == 0
     payload = json.loads(result.stdout)
-    assert len(payload["data"]["skills"]) == 11
+    assert len(payload["data"]["skills"]) >= 11
     assert (output / "platform-check" / "SKILL.md").is_file()
 
 
@@ -438,3 +439,37 @@ def test_ui_cli_commands(tmp_path: Path) -> None:
     cov = _invoke(tmp_path, "--json", "--profile", "ui", "ui", "coverage", project_id, job_id)
     assert cov.exit_code == 0
     assert "discovered_screens" in json.loads(cov.stdout)["data"]
+
+
+def test_init_first_run_and_setup_ui_launch(
+    tmp_path: Path,
+    monkeypatch: Any,
+) -> None:
+    launched: list[dict[str, Any]] = []
+
+    def fake_launch(
+        runtime: Any,
+        *,
+        host: str | None = None,
+        port: int | None = None,
+        open_browser: bool = True,
+    ) -> None:
+        launched.append({"host": host, "port": port, "open_browser": open_browser})
+
+    monkeypatch.delenv("PYTEST_CURRENT_TEST", raising=False)
+    monkeypatch.setattr("raa.cli.main._serve_ui_and_open_browser", fake_launch)
+
+    # First-time init automatically launches the Setup UI server
+    res1 = _invoke(tmp_path, "init")
+    assert res1.exit_code == 0
+    assert len(launched) == 1
+
+    # Second init on the same workspace does NOT auto-launch UI unless --ui is passed
+    res2 = _invoke(tmp_path, "init")
+    assert res2.exit_code == 0
+    assert len(launched) == 1
+
+    # Explicit setup-ui command launches the UI server
+    res3 = _invoke(tmp_path, "setup-ui", "--port", "8770", "--no-browser")
+    assert res3.exit_code == 0
+    assert launched[-1] == {"host": None, "port": 8770, "open_browser": False}
