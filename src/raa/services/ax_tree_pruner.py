@@ -154,3 +154,54 @@ def prune_ax_tree(
         "interactive_elements": interactive_elements,
         "compact_markdown": compact_markdown,
     }
+
+
+_BOUNDS_RE = re.compile(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]")
+
+
+def fuse_ui_tree_and_screenshot(
+    *,
+    hierarchy_xml: str | None = None,
+    hierarchy_dict: dict[str, Any] | None = None,
+    screen_width: int = 1080,
+    screen_height: int = 2400,
+    screenshot_path: str | None = None,
+) -> dict[str, Any]:
+    """Fuse pruned AX tree elements with normalized [0..1000] screenshot tap coordinates."""
+    pruned = prune_ax_tree(hierarchy_xml=hierarchy_xml, hierarchy_dict=hierarchy_dict)
+    w = max(screen_width, 1)
+    h = max(screen_height, 1)
+
+    fused_elements: list[dict[str, Any]] = []
+    for el in pruned["interactive_elements"]:
+        m = _BOUNDS_RE.search(str(el.get("bounds", "")))
+        if m:
+            x1, y1, x2, y2 = (int(m.group(1)), int(m.group(2)), int(m.group(3)), int(m.group(4)))
+            cx = (x1 + x2) // 2
+            cy = (y1 + y2) // 2
+            norm_box = [
+                round((x1 / w) * 1000),
+                round((y1 / h) * 1000),
+                round((x2 / w) * 1000),
+                round((y2 / h) * 1000),
+            ]
+        else:
+            cx, cy = 0, 0
+            norm_box = [0, 0, 0, 0]
+
+        fused_elements.append(
+            {
+                **el,
+                "center_px": {"x": cx, "y": cy},
+                "normalized_box_1000": norm_box,
+            }
+        )
+
+    return {
+        "screen_dimensions": {"width": w, "height": h},
+        "screenshot_path": screenshot_path,
+        "raw_node_count": pruned["raw_node_count"],
+        "fused_element_count": len(fused_elements),
+        "token_reduction_pct": pruned["token_reduction_pct"],
+        "fused_elements": fused_elements,
+    }

@@ -2,15 +2,22 @@
 
 from __future__ import annotations
 
+import ast
 import hashlib
 import keyword
 import re
 from pathlib import Path
-from typing import Any
 
 from raa.domain.api import ClientGenerationResult, OpenAPISpec
 from raa.utils.ids import new_id
 from raa.utils.time import utc_now
+
+
+def _sanitize_docstring(text: str) -> str:
+    """Escape characters that could break out of a triple-quoted docstring."""
+    return (
+        text.replace("\\", "\\\\").replace('"""', '\\"\\"\\"').replace("\r", " ").replace("\n", " ")
+    )
 
 
 def _sanitize_ident(name: str) -> str:
@@ -42,12 +49,13 @@ def generate_python_client(
     spec_bytes = (spec.raw_yaml or "").encode("utf-8")
     spec_digest = hashlib.sha256(spec_bytes).hexdigest()
 
+    base_url_val = spec.servers[0]["url"] if spec.servers else "https://api.example.com"
     # Generate client code
     lines: list[str] = [
         '"""Auto-generated API client produced by RAA API Reverse-Engineering Studio.',
         "",
-        f"Spec Title: {spec.title}",
-        f"Spec Version: {spec.version}",
+        f"Spec Title: {_sanitize_docstring(spec.title)}",
+        f"Spec Version: {_sanitize_docstring(spec.version)}",
         f"Spec Digest: {spec_digest[:16]}",
         '"""',
         "",
@@ -61,7 +69,7 @@ def generate_python_client(
         "",
         "    def __init__(",
         "        self,",
-        f'        base_url: str = "{spec.servers[0]["url"] if spec.servers else "https://api.example.com"}",',
+        f"        base_url: str = {base_url_val!r},",
         "        api_key: Optional[str] = None,",
         "        bearer_token: Optional[str] = None,",
         "        mock: bool = True,",
@@ -117,15 +125,15 @@ def generate_python_client(
             lines.extend(
                 [
                     f"    def {func_name}({sig_str}) -> dict[str, Any]:",
-                    f'        """{method.upper()} {path} (Operation: {op_id})"""',
-                    f'        url_template = "{path}"',
+                    f'        """{_sanitize_docstring(method.upper())} {_sanitize_docstring(path)} (Operation: {_sanitize_docstring(op_id)})"""',
+                    f"        url_template = {path!r}",
                 ]
             )
 
             for pp in path_params:
                 clean_pp = _sanitize_ident(pp)
                 lines.append(
-                    f'        url_template = url_template.replace("{{{pp}}}", str({clean_pp}))'
+                    f"        url_template = url_template.replace({'{' + pp + '}'!r}, str({clean_pp}))"
                 )
 
             lines.extend(
@@ -135,7 +143,7 @@ def generate_python_client(
                     f"            return {sample_repr}",
                     (
                         f'        return {{"status": "dispatched", "url": full_url, '
-                        f'"method": "{method.upper()}"}}'
+                        f'"method": {method.upper()!r}}}'
                     ),
                     "",
                 ]
@@ -160,18 +168,23 @@ def generate_python_client(
     except Exception:
         compiles = False
 
-    # 2. Smoke test: instantiate and invoke a mock method in a safe sandbox dict
+    # 2. Smoke test: verify AST structure defines APIClient cleanly without exec()
     smoke_passed = False
     if compiles:
         try:
-            scope: dict[str, Any] = {}
-            # nosemgrep: python.lang.security.audit.exec-detected
-            exec(client_code, scope)  # noqa: S102
-            cls = scope.get("APIClient")
-            if cls:
-                inst = cls(mock=True)
-                if getattr(inst, "mock", False) is True:
-                    smoke_passed = True
+            tree = ast.parse(client_code, filename=str(client_file))
+            api_client_cls = next(
+                (
+                    node
+                    for node in tree.body
+                    if isinstance(node, ast.ClassDef) and node.name == "APIClient"
+                ),
+                None,
+            )
+            if api_client_cls is not None and any(
+                isinstance(m, ast.FunctionDef) and m.name == "__init__" for m in api_client_cls.body
+            ):
+                smoke_passed = True
         except Exception:
             smoke_passed = False
 

@@ -8,6 +8,10 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
+import socket
+import threading
+import webbrowser
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -103,6 +107,12 @@ offensive_app = typer.Typer(
     help="Offensive security operations, Yaklang playbooks, GUI computer-use & v3 benchmarks.",
     no_args_is_help=True,
 )
+channel_app = typer.Typer(help="Mobile channels and notification intensity.", no_args_is_help=True)
+mcp_mesh_app = typer.Typer(help="External MCP mesh and service connectors.", no_args_is_help=True)
+tv_app = typer.Typer(help="Android TV and 10-foot Living Canvas UI studio.", no_args_is_help=True)
+debloat_app = typer.Typer(
+    help="Rootless UAD-backed Android device debloating and restore.", no_args_is_help=True
+)
 
 app.add_typer(project_app, name="project")
 app.add_typer(artifact_app, name="artifact")
@@ -110,6 +120,7 @@ app.add_typer(tools_app, name="tools")
 app.add_typer(recipe_app, name="recipe")
 app.add_typer(source_app, name="source")
 app.add_typer(skill_app, name="skill")
+app.add_typer(skill_app, name="skills")
 app.add_typer(serve_app, name="serve")
 app.add_typer(framework_app, name="framework")
 app.add_typer(flutter_app, name="flutter")
@@ -136,6 +147,10 @@ app.add_typer(binary_app, name="binary")
 app.add_typer(canvas_app, name="canvas")
 app.add_typer(enterprise_app, name="enterprise")
 app.add_typer(offensive_app, name="offensive")
+app.add_typer(channel_app, name="channel")
+app.add_typer(mcp_mesh_app, name="mcp-mesh")
+app.add_typer(tv_app, name="tv")
+app.add_typer(debloat_app, name="debloat")
 
 console = Console()
 
@@ -182,10 +197,19 @@ def version() -> None:
 
 
 @app.command()
-def init(ctx: typer.Context) -> None:
-    """Create the local workspace and database."""
+def init(
+    ctx: typer.Context,
+    ui: bool | None = typer.Option(
+        None,
+        "--ui/--no-ui",
+        help="Launch the Setup & Tool Manager Web UI (auto-launches on first-time setup).",
+    ),
+) -> None:
+    """Create the local workspace and database (and launch Setup UI on first run)."""
 
     state = _state(ctx)
+    ws_root = (state.workspace or Path(".raa-workspace")).expanduser().resolve()
+    is_first_run = not (ws_root / "raa.sqlite3").exists()
     runtime = _runtime(state)
     _emit(
         state,
@@ -194,9 +218,15 @@ def init(ctx: typer.Context) -> None:
             "database": str(runtime.database.path),
             "profile": runtime.settings.profile,
             "implemented_tools": runtime.registry.count(),
+            "first_run": is_first_run,
         },
         title="Workspace initialized",
     )
+    should_launch_ui = (ui is True) or (
+        ui is None and is_first_run and runtime.settings.setup_auto_launch
+    )
+    if should_launch_ui and not state.json_output and not os.environ.get("PYTEST_CURRENT_TEST"):
+        _serve_ui_and_open_browser(runtime, open_browser=True)
 
 
 @app.command()
@@ -481,6 +511,122 @@ def artifact_files(
         )
     )
     _emit(state, payload)
+
+
+@artifact_app.command("playstore-info")
+def artifact_playstore_info(
+    ctx: typer.Context,
+    package_or_url: str = typer.Argument(..., help="Android package ID or play.google.com URL."),
+    lang: str = typer.Option("en", "--lang", help="Store listing language code."),
+    country: str = typer.Option("us", "--country", help="Store listing country code."),
+) -> None:
+    """Fetch public Google Play Store metadata for an app."""
+
+    state = _state(ctx)
+    payload = asyncio.run(
+        _invoke(
+            _runtime(state),
+            "playstore_app_info",
+            {"package_or_url": package_or_url, "lang": lang, "country": country},
+        )
+    )
+    _emit(state, payload, title="Play Store app info")
+
+
+@artifact_app.command("playstore-download")
+def artifact_playstore_download(
+    ctx: typer.Context,
+    package_or_url: str = typer.Argument(..., help="Android package ID or play.google.com URL."),
+    project_id: str | None = typer.Option(None, "--project-id", "-p", help="Target project ID."),
+    provider: str = typer.Option(
+        "auto",
+        "--provider",
+        help="Download provider: auto, avd, adb, apkeep, or gplaycli.",
+    ),
+    avd_name: str | None = typer.Option(
+        None,
+        "--avd",
+        help="AVD name from AVD Manager to boot and install from Google Play Store.",
+    ),
+    headless: bool = typer.Option(
+        False,
+        "--headless",
+        help="Launch the AVD emulator headlessly (-no-window).",
+    ),
+    auto_tap_install: bool = typer.Option(
+        True,
+        "--auto-tap/--no-auto-tap",
+        help="Automatically tap Play Store's Install button on the AVD.",
+    ),
+    version_code: int | None = typer.Option(None, "--version-code", help="Specific versionCode."),
+    split_apk: bool = typer.Option(False, "--split-apk", help="Request split APKs if supported."),
+    device_serial: str | None = typer.Option(None, "--device", "-s", help="ADB device serial."),
+    auto_ingest: bool = typer.Option(
+        True,
+        "--ingest/--no-ingest",
+        help="Automatically ingest downloaded APK/APKS into project_id.",
+    ),
+) -> None:
+    """Download an Android app from Google Play Store via AVD Manager or fallback provider."""
+
+    state = _state(ctx)
+    payload = asyncio.run(
+        _invoke(
+            _runtime(state),
+            "playstore_download_app",
+            {
+                "package_or_url": package_or_url,
+                "project_id": project_id,
+                "provider": provider,
+                "avd_name": avd_name,
+                "headless": headless,
+                "auto_tap_install": auto_tap_install,
+                "version_code": version_code,
+                "split_apk": split_apk,
+                "device_serial": device_serial,
+                "auto_ingest": auto_ingest,
+            },
+        )
+    )
+    _emit(state, payload, title="Play Store app downloaded")
+
+
+@artifact_app.command("apkeep-download")
+def artifact_apkeep_download(
+    ctx: typer.Context,
+    package_or_url: str = typer.Argument(..., help="Android package ID or play.google.com URL."),
+    project_id: str | None = typer.Option(None, "--project-id", "-p", help="Target project ID."),
+    source: str = typer.Option(
+        "google-play",
+        "--source",
+        help="apkeep source: google-play (default), apk-pure, f-droid, or huawei-app-gallery.",
+    ),
+    version_code: int | None = typer.Option(None, "--version-code", help="Specific versionCode."),
+    split_apk: bool = typer.Option(False, "--split-apk", help="Request split APKs if supported."),
+    auto_ingest: bool = typer.Option(
+        True,
+        "--ingest/--no-ingest",
+        help="Automatically ingest downloaded APK/APKS into project_id.",
+    ),
+) -> None:
+    """Download an Android app via efforg/apkeep (Google Play first priority)."""
+
+    state = _state(ctx)
+    payload = asyncio.run(
+        _invoke(
+            _runtime(state),
+            "apkeep_download_app",
+            {
+                "package_or_url": package_or_url,
+                "project_id": project_id,
+                "source": source,
+                "version_code": version_code,
+                "split_apk": split_apk,
+                "auto_ingest": auto_ingest,
+            },
+        )
+    )
+    _emit(state, payload, title="apkeep app downloaded")
 
 
 @app.command("analyze")
@@ -2554,11 +2700,69 @@ def serve_api(
     )
 
 
+def _is_port_open(host: str, port: int) -> bool:
+    try:
+        with socket.create_connection((host, port), timeout=0.4):
+            return True
+    except OSError:
+        return False
+
+
+def _serve_ui_and_open_browser(
+    runtime: Runtime,
+    *,
+    host: str | None = None,
+    port: int | None = None,
+    open_browser: bool = True,
+) -> None:
+    import uvicorn
+
+    from raa.api.app import create_app
+
+    target_host = host or runtime.settings.api_host
+    target_port = port or runtime.settings.setup_port
+    setup_url = f"http://{target_host}:{target_port}/setup"
+
+    if open_browser and not os.environ.get("PYTEST_CURRENT_TEST"):
+        threading.Timer(0.8, webbrowser.open, args=(setup_url,)).start()
+
+    if _is_port_open(target_host, target_port):
+        console.print(
+            f"[green]RAA Setup & Tool Manager UI is already running at[/green] {setup_url}"
+        )
+        return
+
+    console.print(f"[cyan]Starting RAA Setup & Tool Manager UI at[/cyan] {setup_url}")
+    uvicorn.run(
+        create_app(runtime),
+        host=target_host,
+        port=target_port,
+        log_level=runtime.settings.log_level.lower(),
+    )
+
+
+@app.command("setup-ui")
+def setup_ui_cmd(
+    ctx: typer.Context,
+    host: str | None = typer.Option(None, "--host", help="Bind host (default from RAA_API_HOST)."),
+    port: int | None = typer.Option(
+        None, "--port", min=1, max=65535, help="Bind port (default 8765)."
+    ),
+    open_browser: bool = typer.Option(
+        True, "--browser/--no-browser", help="Open Setup UI in browser."
+    ),
+) -> None:
+    """Start the RAA Setup & Tool Manager Web UI server."""
+    state = _state(ctx)
+    runtime = _runtime(state)
+    _serve_ui_and_open_browser(runtime, host=host, port=port, open_browser=open_browser)
+
+
 @app.command("setup")
 def setup(
     ctx: typer.Context,
-    agent: str = typer.Option(
-        "generic",
+    agent: str | None = typer.Option(
+        None,
         "--agent",
         help="claude-code, claude-desktop, codex, cursor, gemini, vscode or generic.",
     ),
@@ -2567,28 +2771,59 @@ def setup(
         "--output",
         help="Optional file to write. Printed to stdout otherwise.",
     ),
+    skip: bool = typer.Option(
+        False,
+        "--skip",
+        help="Mark setup as skipped and use pure-Python fallbacks.",
+    ),
+    serve: bool = typer.Option(
+        True,
+        "--serve/--no-serve",
+        help="Start the interactive Setup & Tool Manager Web UI server.",
+    ),
+    host: str | None = typer.Option(None, "--host", help="Bind host for Setup UI."),
+    port: int | None = typer.Option(
+        None, "--port", min=1, max=65535, help="Bind port for Setup UI."
+    ),
+    open_browser: bool = typer.Option(
+        True, "--browser/--no-browser", help="Open Setup UI in browser."
+    ),
 ) -> None:
-    """Print or write an MCP client configuration snippet."""
+    """Launch interactive setup & tool manager web UI, register skip, or print MCP client config."""
 
     state = _state(ctx)
     runtime = _runtime(state)
-    profile = _profile(state.profile or runtime.settings.profile)
-    args = [
-        "--profile",
-        profile,
-        "--workspace",
-        str(runtime.workspace.root),
-        "serve",
-        "mcp",
-    ]
-    command = f"raa {' '.join(args)}"
-    config = _client_config(agent, command, args)
-    if output is None:
-        typer.echo(config)
+
+    if skip:
+        res = runtime.tool_manager.register_skip()
+        _emit(state, res)
         return
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(config + "\n", encoding="utf-8")
-    _emit(state, {"agent": agent, "path": str(output)})
+
+    if agent is not None or output is not None:
+        agent_name = agent or "generic"
+        profile = _profile(state.profile or runtime.settings.profile)
+        args = [
+            "--profile",
+            profile,
+            "--workspace",
+            str(runtime.workspace.root),
+            "serve",
+            "mcp",
+        ]
+        command = f"raa {' '.join(args)}"
+        config = _client_config(agent_name, command, args)
+        if output is None:
+            typer.echo(config)
+            return
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(config + "\n", encoding="utf-8")
+        _emit(state, {"agent": agent_name, "path": str(output)})
+        return
+
+    res = runtime.tool_manager.reopen_setup()
+    _emit(state, res)
+    if serve and not state.json_output and not os.environ.get("PYTEST_CURRENT_TEST"):
+        _serve_ui_and_open_browser(runtime, host=host, port=port, open_browser=open_browser)
 
 
 # --- Device and Dynamic commands ---
@@ -7216,6 +7451,410 @@ def _client_config(agent: str, command: str, args: list[str]) -> str:
         payload = {"mcpServers": {"raa": {"command": "raa", "args": args}}}
         return json.dumps(payload, indent=2)
     raise typer.BadParameter(f"Unknown agent '{agent}'.")
+
+
+# --- Phase 21 (v4.0.0) CLI Commands ---
+
+
+@tools_app.command("install")
+def tools_install_cli(
+    ctx: typer.Context,
+    tool_name: str = typer.Argument(
+        ..., help="Tool ID: jadx, apktool, platform-tools, ghidra, frida, uber-apk-signer, or all."
+    ),
+    force: bool = typer.Option(False, "--force", help="Force re-download."),
+) -> None:
+    """Download, verify, and auto-configure tool path."""
+    state = _state(ctx)
+    runtime = _runtime(state)
+    res = runtime.tool_manager.download_tool(tool_name, force=force)
+    _emit(state, res)
+
+
+@tools_app.command("delete")
+def tools_delete_cli(
+    ctx: typer.Context,
+    tool_name: str = typer.Argument(..., help="Tool ID to uninstall."),
+) -> None:
+    """Uninstall tool and reclaim disk space."""
+    state = _state(ctx)
+    runtime = _runtime(state)
+    res = runtime.tool_manager.delete_tool(tool_name)
+    _emit(state, res)
+
+
+# Channels CLI
+@channel_app.command("test")
+def channel_test_cli(
+    ctx: typer.Context,
+    channel: str = typer.Argument(..., help="Target channel: telegram or whatsapp."),
+    target: str = typer.Option("test_target", "--target", help="Chat ID or phone number."),
+) -> None:
+    """Send verification ping to configured Telegram or WhatsApp."""
+    state = _state(ctx)
+    runtime = _runtime(state)
+    res = runtime.channels.test_ping(channel, target)
+    _emit(state, res)
+
+
+@channel_app.command("pair")
+def channel_pair_cli(
+    ctx: typer.Context,
+    channel: str = typer.Argument("whatsapp", help="Channel name (default: whatsapp)."),
+) -> None:
+    """Display terminal QR code for local WhatsApp Web pairing."""
+    state = _state(ctx)
+    runtime = _runtime(state)
+    res = runtime.channels.whatsapp.generate_pairing_qr()
+    if not state.json_output:
+        console.print(f"[bold green]WhatsApp QR Code Pairing[/bold green]\n{res['qr_ascii']}")
+        console.print(f"[cyan]Pairing Code:[/cyan] [bold]{res['pairing_code']}[/bold]")
+        console.print(f"[dim]{res['instructions']}[/dim]")
+    else:
+        _emit(state, res)
+
+
+intensity_app = typer.Typer(
+    help="Manage notification cadence and message intensity.", no_args_is_help=True
+)
+channel_app.add_typer(intensity_app, name="intensity")
+
+
+@intensity_app.command("set")
+def channel_intensity_set_cli(
+    ctx: typer.Context,
+    interval: str = typer.Option(
+        "5m", "--interval", "-i", help="Interval string (e.g. 1m, 2m, 5m, 10m)."
+    ),
+    mode: str = typer.Option(
+        "interval", "--mode", "-m", help="Cadence mode: start_end, interval, milestone, adaptive."
+    ),
+) -> None:
+    """Set cadence: start/end, 1m, 2m, 5m, 10m, or custom."""
+    state = _state(ctx)
+    runtime = _runtime(state)
+    digits = "".join(c for c in interval if c.isdigit())
+    mins = int(digits) if digits else 5
+    res = runtime.cadence.configure(mode=mode, interval_minutes=mins)
+    _emit(state, res)
+
+
+@intensity_app.command("status")
+def channel_intensity_status_cli(ctx: typer.Context) -> None:
+    """Display active notification cadence and stats."""
+    state = _state(ctx)
+    runtime = _runtime(state)
+    res = runtime.cadence.get_status()
+    _emit(state, res)
+
+
+# Skills Evolved CLI
+@skill_app.command("list-evolved")
+def skill_list_evolved_cli(ctx: typer.Context) -> None:
+    """List dynamically learned recipes and patches."""
+    state = _state(ctx)
+    runtime = _runtime(state)
+    recipes = runtime.self_evolution.list_procedures()
+    _emit(state, {"evolved_recipes": recipes, "count": len(recipes)})
+
+
+@skill_app.command("inspect")
+def skill_inspect_cli(
+    ctx: typer.Context,
+    recipe_name: str = typer.Argument(..., help="Name of evolved recipe to inspect."),
+) -> None:
+    """View verified steps, selectors, and patch history."""
+    state = _state(ctx)
+    runtime = _runtime(state)
+    res = runtime.self_evolution.read_procedure(recipe_name)
+    _emit(state, res)
+
+
+# External MCP Mesh CLI
+@mcp_mesh_app.command("list")
+def mcp_mesh_list_cli(ctx: typer.Context) -> None:
+    """List connected external MCP servers and tools."""
+    state = _state(ctx)
+    runtime = _runtime(state)
+    servers = runtime.mcp_mesh.list_connectors()
+    _emit(state, {"mcp_servers": servers, "count": len(servers)})
+
+
+@mcp_mesh_app.command("connect")
+def mcp_mesh_connect_cli(
+    ctx: typer.Context,
+    name: str = typer.Argument(..., help="Identifier for external MCP server."),
+    transport: str = typer.Option(
+        "stdio", "--transport", "-t", help="Transport: stdio, sse, streamable-http."
+    ),
+    command: str | None = typer.Option(None, "--command", "-c", help="Command for stdio."),
+    url: str | None = typer.Option(None, "--url", "-u", help="URL for sse."),
+) -> None:
+    """Connect new external MCP server."""
+    state = _state(ctx)
+    runtime = _runtime(state)
+    res = runtime.mcp_mesh.connect(name=name, transport=transport, command=command, url=url)
+    _emit(state, res)
+
+
+@mcp_mesh_app.command("inspect")
+def mcp_mesh_inspect_cli(
+    ctx: typer.Context,
+    name: str = typer.Argument(..., help="Name of MCP server to inspect."),
+) -> None:
+    """Inspect tools, schemas and status of an MCP server."""
+    state = _state(ctx)
+    runtime = _runtime(state)
+    res = runtime.mcp_mesh.inspect_server(name)
+    _emit(state, res)
+
+
+@mcp_mesh_app.command("test")
+def mcp_mesh_test_cli(
+    ctx: typer.Context,
+    name: str = typer.Argument(..., help="Name of MCP server to test ping."),
+) -> None:
+    """Test JSON-RPC handshake and latency probe."""
+    state = _state(ctx)
+    runtime = _runtime(state)
+    res = runtime.mcp_mesh.test_ping(name)
+    _emit(state, res)
+
+
+@mcp_mesh_app.command("disconnect")
+def mcp_mesh_disconnect_cli(
+    ctx: typer.Context,
+    name: str = typer.Argument(..., help="Name of MCP server to disconnect."),
+) -> None:
+    """Disconnect and unregister external MCP tools."""
+    state = _state(ctx)
+    runtime = _runtime(state)
+    res = runtime.mcp_mesh.disconnect(name)
+    _emit(state, res)
+
+
+@mcp_mesh_app.command("list-tools")
+def mcp_mesh_list_tools_cli(
+    ctx: typer.Context,
+    name: str = typer.Argument(..., help="Connected MCP server name (e.g. rea, craft-anything)."),
+    timeout_seconds: float = typer.Option(30.0, "--timeout", min=1.0, max=300.0),
+) -> None:
+    """Query live tools/list from a connected external MCP server."""
+    state = _state(ctx)
+    payload = asyncio.run(
+        _invoke(
+            _runtime(state),
+            "mcp_mesh_list_tools",
+            {"name": name, "timeout_seconds": timeout_seconds},
+        )
+    )
+    _emit(state, payload)
+
+
+@mcp_mesh_app.command("call")
+def mcp_mesh_call_cli(
+    ctx: typer.Context,
+    server_name: str = typer.Argument(
+        ..., help="Connected MCP server name (e.g. rea, craft-anything)."
+    ),
+    tool_name: str = typer.Argument(..., help="Tool name on the external MCP server."),
+    arguments_json: str = typer.Option("{}", "--args", help="JSON object of tool arguments."),
+    timeout_seconds: float = typer.Option(60.0, "--timeout", min=1.0, max=600.0),
+) -> None:
+    """Invoke a tool on a connected external MCP server through RAA."""
+    state = _state(ctx)
+    parsed_args = json.loads(arguments_json)
+    payload = asyncio.run(
+        _invoke(
+            _runtime(state),
+            "mcp_mesh_call",
+            {
+                "server_name": server_name,
+                "tool_name": tool_name,
+                "arguments": parsed_args,
+                "timeout_seconds": timeout_seconds,
+            },
+        )
+    )
+    _emit(state, payload)
+
+
+# Device Wireless CLI
+@device_app.command("pair")
+def device_pair_cli(
+    ctx: typer.Context,
+    endpoint: str = typer.Argument(..., help="Host:port (e.g. 192.168.1.100:38291)."),
+    code: str = typer.Argument(..., help="Pairing code."),
+) -> None:
+    """Pair Android device/TV over Wi-Fi (Android 11+ TLS)."""
+    state = _state(ctx)
+    runtime = _runtime(state)
+    if ":" in endpoint:
+        host, port_str = endpoint.split(":", 1)
+        port = int(port_str)
+    else:
+        host, port = endpoint, 5555
+    res = runtime.wireless_gateway.pair_device(host=host, pairing_port=port, pairing_code=code)
+    _emit(state, res)
+
+
+@device_app.command("connect")
+def device_connect_cli(
+    ctx: typer.Context,
+    endpoint: str = typer.Argument(..., help="Host[:port] (e.g. 192.168.1.100)."),
+) -> None:
+    """Connect to Android device/TV over Wi-Fi (zero-binary)."""
+    state = _state(ctx)
+    runtime = _runtime(state)
+    if ":" in endpoint:
+        host, port_str = endpoint.split(":", 1)
+        port = int(port_str)
+    else:
+        host, port = endpoint, 5555
+    res = runtime.wireless_gateway.connect_device(host=host, port=port)
+    _emit(state, res)
+
+
+@device_app.command("status")
+def device_status_cli(
+    ctx: typer.Context,
+    endpoint: str | None = typer.Argument(None, help="Optional device endpoint."),
+) -> None:
+    """Check wireless device connection, battery and port state."""
+    state = _state(ctx)
+    runtime = _runtime(state)
+    res = runtime.wireless_gateway.get_device_status(device_id=endpoint)
+    _emit(state, res)
+
+
+@device_app.command("push-apk")
+def device_push_apk_cli(
+    ctx: typer.Context,
+    apk_path: str = typer.Argument(..., help="Path to APK binary file."),
+    endpoint: str | None = typer.Option(None, "--device", "-d", help="Target device endpoint."),
+) -> None:
+    """Install APK over Wi-Fi using resilient chunking."""
+    state = _state(ctx)
+    runtime = _runtime(state)
+    res = runtime.wireless_gateway.push_apk_resilient(apk_path=apk_path, target_device=endpoint)
+    _emit(state, res)
+
+
+# TV Studio CLI
+@tv_app.command("redesign")
+def tv_redesign_cli(
+    ctx: typer.Context,
+    target: str = typer.Argument(..., help="APK path or package name."),
+    framework: str = typer.Option(
+        "androidx.tv.material3", "--framework", "-f", help="Target TV UI framework."
+    ),
+) -> None:
+    """Redesign Android TV app into Compose for TV M3."""
+    state = _state(ctx)
+    runtime = _runtime(state)
+    res = runtime.tv_studio.redesign_tv_ui(target_input=target, target_framework=framework)
+    _emit(state, res)
+
+
+@tv_app.command("diff")
+def tv_diff_cli(
+    ctx: typer.Context,
+    before: str = typer.Argument(..., help="Original screenshot image path."),
+    after: str = typer.Argument(..., help="Compose TV screenshot image path."),
+    mask: bool = typer.Option(True, "--mask/--no-mask", help="Mask dynamic topbar."),
+) -> None:
+    """Compare original vs redesigned TV screens with masking."""
+    state = _state(ctx)
+    runtime = _runtime(state)
+    res = runtime.tv_studio.verify_screendiff(
+        before_image=before, after_image=after, mask_topbar=mask
+    )
+    _emit(state, res)
+
+
+@tv_app.command("bench")
+def tv_bench_cli(
+    ctx: typer.Context,
+    package: str = typer.Option("com.tv.app", "--package", "-p", help="Target TV app package."),
+) -> None:
+    """Run wireless cold start and memory PSS benchmark."""
+    state = _state(ctx)
+    runtime = _runtime(state)
+    res = runtime.tv_studio.benchmark_performance(package_name=package)
+    _emit(state, res)
+
+
+# Rootless UAD-Backed Android Debloat CLI
+@debloat_app.command("inspect")
+def debloat_inspect_cli(
+    ctx: typer.Context,
+    device_id: str = typer.Option("", "--device", "-d", help="ADB device serial or IP:Port."),
+    tier: str | None = typer.Option(
+        None,
+        "--tier",
+        "-t",
+        help="Filter by UAD safety tier (recommended, advanced, expert, unsafe, protected_system).",
+    ),
+) -> None:
+    """Inspect Android packages and classify them with UAD safety tiers."""
+    state = _state(ctx)
+    runtime = _runtime(state)
+    res = runtime.debloat.inspect_packages(device_id=device_id, tier_filter=tier)
+    _emit(state, res)
+
+
+@debloat_app.command("apply")
+def debloat_apply_cli(
+    ctx: typer.Context,
+    packages: list[str] = typer.Argument(
+        ..., help="One or more package names to disable or restore."
+    ),
+    device_id: str = typer.Option("", "--device", "-d", help="ADB device serial or IP:Port."),
+    dry_run: bool = typer.Option(
+        True, "--dry-run/--execute", help="Preview changes before applying."
+    ),
+    allow_expert: bool = typer.Option(
+        False, "--allow-expert", help="Allow disabling 'expert' tier packages."
+    ),
+    restore: bool = typer.Option(
+        False, "--restore", help="Re-enable packages instead of disabling."
+    ),
+) -> None:
+    """Preview or apply rootless ADB debloating with automatic backup and undo scripts."""
+    state = _state(ctx)
+    runtime = _runtime(state)
+    res = runtime.debloat.apply_debloat(
+        packages=packages,
+        device_id=device_id,
+        dry_run=dry_run,
+        allow_expert=allow_expert,
+        restore=restore,
+    )
+    _emit(state, res)
+
+
+@debloat_app.command("restore")
+def debloat_restore_cli(
+    ctx: typer.Context,
+    backup_file: str = typer.Argument(
+        ..., help="Path to backup_*.json generated by debloat apply."
+    ),
+    device_id: str = typer.Option(
+        "", "--device", "-d", help="Override target ADB device serial or IP:Port."
+    ),
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help="Preview restore commands without executing."
+    ),
+) -> None:
+    """Restore previously debloated packages from a JSON backup file."""
+    state = _state(ctx)
+    runtime = _runtime(state)
+    res = runtime.debloat.restore_from_backup(
+        backup_file=backup_file,
+        device_id=device_id,
+        dry_run=dry_run,
+    )
+    _emit(state, res)
 
 
 if __name__ == "__main__":  # pragma: no cover

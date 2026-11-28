@@ -5,9 +5,9 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Current_Release-v3.0.0_Production-success?style=flat-square" alt="Current Release: v2.0.0 Production">
-  <img src="https://img.shields.io/badge/Total_Tools-322_Implemented-blue?style=flat-square" alt="Total Tools: 244 Implemented">
-  <img src="https://img.shields.io/badge/Tests-526_Passing-brightgreen?style=flat-square" alt="Tests: 437 Passing">
+  <img src="https://img.shields.io/badge/Current_Release-v4.0.0_Production-success?style=flat-square" alt="Current Release: v4.0.0 Production">
+  <img src="https://img.shields.io/badge/Total_Tools-379_Implemented-blue?style=flat-square" alt="Total Tools: 379 Implemented">
+  <img src="https://img.shields.io/badge/Tests-740+_Passing-brightgreen?style=flat-square" alt="Tests: 740+ Passing">
 </p>
 <p align="center">
   <img src="https://img.shields.io/badge/Protocol-2026--07--28-informational?style=flat-square" alt="Protocol: 2026-07-28">
@@ -20,7 +20,7 @@ This document defines the specialized AI agent roles, responsibilities, input/ou
 
 ## 1. Multi-Agent System Architecture
 
-Rather than relying on a single monolithic agent that suffers from context window exhaustion and tool-call confusion, RAA introduces a team of **14 Specialized Subagents** orchestrated by a primary **Coordinator Agent**:
+Rather than relying on a single monolithic agent that suffers from context window exhaustion and tool-call confusion, RAA v4.0.0 coordinates **18 Specialized Agents** (`ALL_SPECIALIZED_AGENTS` in `src/raa/services/agents/specialized_agents.py`) orchestrated by a primary **Coordinator Agent**:
 
 ```
                        ┌────────────────────────────┐
@@ -130,14 +130,33 @@ Rather than relying on a single monolithic agent that suffers from context windo
 - **Input Contract:** `project_id`, `base_artifact_id`, `patched_artifact_id`.
 - **Output Contract:** Test execution report, coverage metrics, and behavioral divergence verification report.
 
+### 2.15 Mobile Conversational Agent (`MobileAgent`, v4.0.0)
+- **Role:** Operates two-way messaging over Telegram and WhatsApp, validates inbound requests via domain guard, orchestrates analysis pipelines, and delivers rebuilt APKs in chat.
+- **Allowed Tools:** `channel_prompt_receive`, `channel_message_dispatch`, `channel_apk_deliver`, `channel_whitelist_manage`.
+
+### 2.16 Toolchain & Binary Integrity Agent (`ToolchainAgent`, v4.0.0)
+- **Role:** Autonomously monitors external dependencies, verifies SHA-256 binary integrity, provisions headless reversing runtimes, and manages runtime `PATH` lifecycles.
+- **Allowed Tools:** `tool_manager_list`, `tool_manager_download`, `tool_manager_verify`, `tool_manager_auto_path`, `tool_manager_delete`, `tool_manager_status`.
+
+### 2.17 Self-Evolution Agent (`EvolutionAgent`, v4.0.0)
+- **Role:** Observes task execution anomalies, formulates dynamic bypass recipes, executes `skills.save`/`skills.patch` operations, and updates `.raa-workspace/memory/MEMORY.md`.
+- **Allowed Tools:** `skills_procedure_save`, `skills_procedure_read`, `skills_procedure_patch`, `recipe_self_evolve`, `memory_lesson_learn`, `memory_lesson_query`.
+
+### 2.18 Notification Cadence Agent (`CadenceAgent`, v4.0.0)
+- **Role:** Monitors task velocity and milestone events, regulates interval updates (start/end, 1m, 2m, 5m, 10m, custom), and handles emergency CVE break-in alerts.
+- **Allowed Tools:** `channel_intensity_configure`, `channel_intensity_get`.
+
 ---
 
 ## 3. Reusable Skills Catalog
 
-RAA packages its most frequently used operational workflows into **Reusable Skills** compatible with Claude Code, Cursor, Codex CLI, OpenCode, and Antigravity:
+RAA packages its most frequently used operational workflows into **23 Reusable Skills** in `skills/` compatible with Claude Code, Cursor, Codex CLI, OpenCode, and Antigravity:
 
 | Skill ID | Name | Core Tools Used | Output Deliverables |
 |:---|:---|:---|:---|
+| `android-triage` | Single-Pass Android Triage | `artifact_ingest`, `manifest_get`, `framework_detect` | Rapid initial APK triage summary. |
+| `platform-check` | Host Environment & Diagnostics | `doctor`, `admin_engine_verify`, `tool_manager_status` | Host dependencies and sidecar readiness report. |
+| `report-and-export` | Report & Evidence Export | `report_generate`, `export_sarif`, `admin_sbom` | Executive Markdown, JSON, SARIF, and SBOM exports. |
 | `raa-apk-triage` | Fast APK Triage & Discovery | `artifact_ingest`, `manifest_*`, `framework_detect` | Executive summary, tech stack, and risk profile. |
 | `raa-source-reconstruct` | Source Code Reconstruction | `source_search`, `source_get_class`, `deobfuscate_suggest_names` | Clean decompiled Java/Kotlin classes with persistent names. |
 | `raa-ui-redesign` | Mobile UI Extraction & Redesign | `ui_runtime_capture`, `ui_redesign_generate`, `ui_visual_compare` | Production Jetpack Compose / React Native screen code. |
@@ -145,7 +164,19 @@ RAA packages its most frequently used operational workflows into **Reusable Skil
 | `raa-flutter-reversing` | Flutter Deep Reverse Engineering | `flutter_assets`, `flutter_patch_tls`, `flutter_dump_strings` | Dart classes, API URLs, and proxy-patched APK. |
 | `raa-native-reversing` | Native Library & JNI Audit | `native_symbols`, `native_disassemble`, `native_decompile` | C pseudocode & JNI method bridge mappings. |
 | `raa-security-audit` | OWASP MASVS & Privacy Audit | `security_scan_static`, `privacy_data_flows`, `quark_score` | Formatted markdown security report & STIX 2.1 IOCs. |
+| `raa-app-store-compliance` | App Store & Google Play Pre-Submission Compliance | `security_scan_static`, `privacy_data_flows`, `quark_score`, `tool_manager_download` | Store rejection risk report, Data Safety / Privacy Manifest checks, and regulatory deadline alerts (`mjmirza/app-store-compliance`). |
 | `raa-controlled-rebuild` | Controlled APK Patching & Rebuild | `apk_patch`, `apk_sign`, `verify_behavior`, `test_run` | Signed patched APK & behavioral verification report. |
+| `raa-android-tv-studio` | Android TV & 10-Foot Living Canvas Studio | `tv_ui_redesign`, `visual_screendiff_verify`, `wireless_perf_benchmark` | Android TV Compose M3 screens, screendiff, and Perfetto trace. |
+| `raa-cadence-controller` | Mobile Notification Cadence Controller | `channel_intensity_configure`, `channel_intensity_get` | Interval & urgency break-in cadence configuration. |
+| `raa-mcp-mesh-manager` | Dynamic External MCP Mesh Manager | `mcp_mesh_connect`, `mcp_mesh_list`, `mcp_mesh_inspect`, `mcp_mesh_test` | Connected external MCP server inventory & health status. |
+| `raa-mobile-agent` | Two-Way Mobile Agent (Telegram/WhatsApp) | `channel_prompt_receive`, `channel_message_dispatch`, `channel_apk_deliver` | Mobile chat execution & direct APK delivery. |
+| `raa-nmap-vulners` | Nmap & Vulners Backend Recon | `api_list_operations`, `osint_*` | Backend host port & CVE vulnerability mapping. |
+| `raa-self-evolving-recipes` | Self-Evolving Procedural Recipes | `skills_procedure_save`, `skills_procedure_patch`, `recipe_self_evolve` | Saved/patched procedural recipes & `MEMORY.md` lessons. |
+| `raa-setup-wizard` | Interactive Setup & Onboarding Wizard | `open_setup_ui`, `setup_state_get`, `setup_skip_register` | Guided onboarding state & toolchain setup. |
+| `raa-smap-recon` | Smap Passive Port & Service Recon | `api_list_operations`, `osint_*` | Passive Shodan-based host & service recon report. |
+| `raa-toolchain-manager` | Dynamic Toolchain & Engine Manager | `tool_manager_list`, `tool_manager_download`, `tool_manager_verify` | Verified reversing binaries & auto-PATH configuration. |
+| `raa-vault-guard` | Zero-Knowledge Vault & Content Shield | `vault_*`, `untrusted_content_wrap` | Redacted secret references & quarantined untrusted blocks. |
+| `raa-wireless-device-gateway` | Wireless ADB & Wi-Fi Device Gateway | `wireless_device_connect`, `wireless_device_status`, `wireless_apk_push` | Cable-free Wi-Fi pairing, base64 APK push & port checks. |
 
 ---
 

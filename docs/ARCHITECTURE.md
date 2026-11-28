@@ -5,9 +5,9 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Current_Release-v3.0.0_Production-success?style=flat-square" alt="Current Release: v2.0.0 Production">
-  <img src="https://img.shields.io/badge/Total_Tools-322_Implemented-blue?style=flat-square" alt="Total Tools: 244 Implemented">
-  <img src="https://img.shields.io/badge/Tests-526_Passing-brightgreen?style=flat-square" alt="Tests: 437 Passing">
+  <img src="https://img.shields.io/badge/Current_Release-v4.0.0_Production-success?style=flat-square" alt="Current Release: v4.0.0 Production">
+  <img src="https://img.shields.io/badge/Total_Tools-377_Implemented-blue?style=flat-square" alt="Total Tools: 377 Implemented">
+  <img src="https://img.shields.io/badge/Tests-660+_Passing-brightgreen?style=flat-square" alt="Tests: 660+ Passing">
 </p>
 <p align="center">
   <img src="https://img.shields.io/badge/Protocol-2026--07--28-informational?style=flat-square" alt="Protocol: 2026-07-28">
@@ -42,13 +42,13 @@ flowchart TD
     subgraph Surfaces["1. Client & Agent Surfaces"]
         MCP["🤖 MCP Server (stdio & Streamable HTTP)"]:::surf
         REST["⚡ FastAPI REST Surface (/v1/*)"]:::surf
-        CLI["💻 Typer CLI (311 Commands)"]:::surf
+        CLI["💻 Typer CLI (342 Commands)"]:::surf
         SDK["🐍 Python SDK / Library"]:::surf
     end
 
     subgraph RuntimeCore["2. Runtime & Policy Invariants"]
         Runtime["Runtime.invoke()"]:::core
-        Registry["Capability Registry (322 Tools & 8 Profiles)"]:::core
+        Registry["Capability Registry (377 Tools & 8 Profiles)"]:::core
         Policy["Policy Engine (Fail-Closed Scopes)"]:::core
         Audit["Audit Service (SHA-256 Hash Chain)"]:::core
         Tenancy["Tenancy & Quota Service"]:::core
@@ -65,13 +65,14 @@ flowchart TD
         Security["Security Service (YARA, Capa, Quark, SBOM)"]:::serv
         Agents["Agent Orchestration & Coverage Tracker"]:::serv
         
-        %% v3.0 Evolutionary Services
+        %% v3.0 & v4.0 Evolutionary Services
         Swarm["🤖 Swarm Governance & Memory (Paperclip / Ruflo)"]:::v3serv
         Cognitive["🧠 Cognitive Audit & Dual-Context (ADK / IAP Intel)"]:::v3serv
         AdvBinary["🔬 Advanced Binary (Kuna Rust / RetDec LLVM / Mach-O)"]:::v3serv
-        LivingCanvas["🎨 Living Canvas UI (Google Stitch / Apple HIG)"]:::v3serv
-        EnterpriseMesh["🏢 Enterprise Mesh (7-CLI Gateway / WASM)"]:::v3serv
+        LivingCanvas["🎨 Living Canvas UI & TV Studio (Google Stitch / Apple HIG / TV M3)"]:::v3serv
+        EnterpriseMesh["🏢 Enterprise & MCP Mesh (7-CLI Gateway / WASM / Dynamic MCP)"]:::v3serv
         OffensiveSec["⚔️ Offensive Operations (Yaklang / Computer-Use GUI)"]:::v3serv
+        MobileV4["📱 v4.0 Mobile Channels, Cadence, Evolution, Vault & Wireless ADB"]:::v3serv
     end
 
     subgraph Engines["4. Engine Adapters & Sidecars"]
@@ -108,7 +109,7 @@ flowchart TD
 ### 3.1 Multi-Surface Dispatch (`Runtime.invoke`)
 All client interactions flow through `Runtime.invoke()` in `src/raa/runtime.py`:
 1. **Tool Discovery:** Verifies tool existence in `CapabilityRegistry`.
-2. **Profile Gating:** Ensures the tool is permitted in the selected profile (`minimal`, `core`, `dynamic`, `api`, `ui`, `admin`, `full`).
+2. **Profile Gating:** Ensures the tool is permitted in the selected profile (`minimal`, `core`, `dynamic`, `api`, `ui`, `admin`, `swarm`, `full`).
 3. **Pydantic Validation:** Validates input arguments against `ToolSpec.input_model`.
 4. **Policy Evaluation:** Compares required scopes (`spec.scopes`) against the project's granted scopes via `PolicyEngine.evaluate()`.
 5. **Execution & Context Injection:** Constructs an immutable `ToolContext` and awaits `spec.handler(context, parsed_args)`.
@@ -116,14 +117,15 @@ All client interactions flow through `Runtime.invoke()` in `src/raa/runtime.py`:
 7. **Audit Trail Recording:** Appends invocation metadata, request ID, and canonical argument hash into the SHA-256 hash-chained log.
 
 ### 3.2 Registry and Profile Architecture
-RAA organizes its 151 tools into 7 hierarchical profiles defined in `src/raa/registry/profiles.py`:
+RAA organizes its 377 tools into 8 hierarchical profiles defined in `src/raa/registry/profiles.py`:
 - `minimal` (12 tools): Essential triage, manifest inspection, and basic artifact ingestion.
-- `core` (94 tools): Standard static analysis, class/resource search, and diagnostics.
-- `dynamic` (110 tools): Extends `core` with ADB device leasing, Frida gadget injection, and memory dumping.
-- `api` (111 tools): Extends `core` with API endpoint harvesting, OpenAPI 3.1 synthesis, and Postman export.
-- `ui` (110 tools): Extends `core` with view hierarchy parsing, Jetpack Compose trees, runtime capture, and 8pt redesign synthesis.
-- `admin` (14 tools): Engine verification, cryptographic audit verification, SBOM generation, disaster recovery backup/restore, and telemetry.
-- `full` (151 tools): The superset of all registered capabilities.
+- `core` (230 tools): Standard static analysis, class/resource search, toolchain management, setup, and diagnostics.
+- `dynamic` (271 tools): Extends `core` with ADB device leasing, wireless gateway, Frida gadget injection, and memory dumping.
+- `api` (232 tools): Extends `core` with API endpoint harvesting, OpenAPI 3.1 synthesis, and Postman export.
+- `ui` (231 tools): Extends `core` with view hierarchy parsing, Jetpack Compose trees, Android TV Studio, runtime capture, and 8pt redesign synthesis.
+- `admin` (42 tools): Engine verification, cryptographic audit verification, SBOM generation, disaster recovery backup/restore, and telemetry.
+- `swarm` (200 tools): Multi-agent swarm governance, token budgeting, blackboard coordination, and self-evolving recipes.
+- `full` (377 tools): The superset of all registered capabilities.
 
 ### 3.3 Hybrid UI Extraction & Redesign Engine
 The UI pipeline follows a 7-stage hybrid clean-room workflow:

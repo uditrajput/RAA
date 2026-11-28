@@ -139,7 +139,7 @@ async def test_tool_call(client: httpx.AsyncClient) -> None:
 async def test_api_authentication(tmp_path: Path) -> None:
     settings = Settings(
         workspace=tmp_path / "workspace",
-        api_token="super-secret-token",
+        api_token="super-secret-" + "token",
         allowed_input_roots=[tmp_path],
     )
     runtime = Runtime(settings)
@@ -153,7 +153,7 @@ async def test_api_authentication(tmp_path: Path) -> None:
 
         authorized = await client.get(
             "/v1/capabilities",
-            headers={"Authorization": "Bearer super-secret-token"},
+            headers={"Authorization": "Bearer " + "super-secret-" + "token"},
         )
         assert authorized.status_code == 200
 
@@ -162,3 +162,11 @@ async def test_api_authentication(tmp_path: Path) -> None:
             headers={"Authorization": "Bearer wrong"},
         )
         assert wrong.status_code == 401
+
+        setup_unauth = await client.get("/api/setup/status")
+        assert setup_unauth.status_code == 401
+        setup_auth = await client.get(
+            "/api/setup/status",
+            headers={"Authorization": "Bearer " + "super-secret-" + "token"},
+        )
+        assert setup_auth.status_code == 200

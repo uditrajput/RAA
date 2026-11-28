@@ -36,6 +36,10 @@ Use this skill after a completed analysis job. The job must be `completed`;
   export unless the engagement explicitly permits it.
 - If the workspace is shared, confirm the export destination before writing.
 
+## Anti-Rationalization Gate
+- If `analysis_get_status` is not `completed`, stop immediately — do not summarize partial or cached runs as complete.
+- Every finding in the final export must map to at least one `evidence_get` record; drop or mark unverified any claim lacking evidence.
+
 ## Project overview
 
 For a status update that does not need a full report, run recipe

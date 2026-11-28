@@ -96,7 +96,10 @@ class SkillService:
 
     def install(self, skill_id: str, destination: Path) -> list[Path]:
         skill = self.get(skill_id)
-        target = (destination.expanduser().resolve() / skill.id).resolve()
+        base_dest = destination.expanduser().resolve()
+        target = (base_dest / skill.id).resolve()
+        if not target.is_relative_to(base_dest):
+            raise InvalidArgumentsError("Invalid skill install path.")
         target.mkdir(parents=True, exist_ok=True)
         written: list[Path] = []
         for source in sorted(skill.path.rglob("*")):

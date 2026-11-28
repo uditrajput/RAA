@@ -90,6 +90,7 @@ class CapabilityRegistry:
 
     def __init__(self) -> None:
         self._tools: dict[str, ToolSpec] = {}
+        self._profile_cache: dict[ProfileName, list[ToolSpec]] = {}
 
     def register(self, spec: ToolSpec) -> ToolSpec:
         if spec.name in self._tools:
@@ -97,7 +98,13 @@ class CapabilityRegistry:
         if spec.output_model is not None and not issubclass(spec.output_model, BaseModel):
             raise TypeError(f"output_model for {spec.name} must be a Pydantic model")
         self._tools[spec.name] = spec
+        self._profile_cache.clear()
         return spec
+
+    def clone(self) -> CapabilityRegistry:
+        copy = CapabilityRegistry()
+        copy._tools = dict(self._tools)
+        return copy
 
     def get(self, name: str) -> ToolSpec:
         return self._tools[name]
@@ -112,9 +119,16 @@ class CapabilityRegistry:
         return list(self._tools)
 
     def for_profile(self, profile: ProfileName) -> list[ToolSpec]:
-        if profile == "full":
-            return self.all()
-        return [spec for spec in self._tools.values() if profile in spec.profiles]
+        cached = self._profile_cache.get(profile)
+        if cached is not None:
+            return cached
+        result = (
+            self.all()
+            if profile == "full"
+            else [spec for spec in self._tools.values() if profile in spec.profiles]
+        )
+        self._profile_cache[profile] = result
+        return result
 
     def count(self) -> int:
         return len(self._tools)

@@ -487,6 +487,67 @@ class ApiService:
             "export_path": str(collection_file),
         }
 
+    def _collect_export_operations(self, project_id: str) -> list[dict[str, Any]]:
+        ops = self.list_operations(project_id)
+        operations: list[dict[str, Any]] = [
+            {
+                "operation_id": op.get("operation_id", "op"),
+                "method": op.get("http_method", "GET"),
+                "path": op.get("path_template", "/api/v1/resource"),
+                "auth": op.get("auth_scheme", "none"),
+            }
+            for op in ops.get("operations", [])
+        ]
+        if not operations:
+            operations = [
+                {
+                    "operation_id": "login",
+                    "method": "POST",
+                    "path": "/api/v1/auth/login",
+                    "auth": "none",
+                    "sample_body": {"username": "admin", "password": "password"},
+                },
+                {
+                    "operation_id": "getCurrentUser",
+                    "method": "GET",
+                    "path": "/api/v1/users/me",
+                    "auth": "bearer",
+                },
+                {
+                    "operation_id": "getItems",
+                    "method": "GET",
+                    "path": "/api/v1/items",
+                    "auth": "api_key",
+                },
+            ]
+        return operations
+
+    def export_hoppscotch(
+        self,
+        project_id: str,
+        collection_name: str | None = None,
+        base_url: str = "<<baseUrl>>",
+    ) -> dict[str, Any]:
+        """Export synthesized API endpoints to Hoppscotch v2 JSON collection."""
+        from raa.services.api.hoppscotch_exporter import export_to_hoppscotch_collection
+
+        operations = self._collect_export_operations(project_id)
+        collection_json = export_to_hoppscotch_collection(
+            project_id=project_id,
+            operations=operations,
+            collection_name=collection_name,
+            base_url=base_url,
+        )
+        api_dir = self.get_api_dir(project_id)
+        collection_file = api_dir / "collection.hoppscotch.json"
+        collection_file.write_text(collection_json, encoding="utf-8")
+
+        return {
+            "collection_json": collection_json,
+            "request_count": len(operations),
+            "export_path": str(collection_file),
+        }
+
     def analyze_ip_intel(
         self,
         ip_addresses: list[str] | str,
